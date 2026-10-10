@@ -42,13 +42,15 @@ constexpr char kTag[] = "jalak_app";
 // I2C address remain unconfirmed. Do NOT treat this as hardware validation.
 //
 //   I2C (OLED):   SDA=8, SCL=9
-//   I2S (amp MAX98357A, TX): BCLK=4, LRC=5, DIN=6
+//   I2S amp (MAX98357A, TX): BCLK=4, LRC=5, DIN=6
+//   I2S mic (INMP441, RX):   BCLK=18, WS=47, DOUT=21   (agent-chosen, unverified)
 //   Touch/PTT:    IRQ=2
 //   microSD (SPI, NOT yet driven): CS=10, MOSI=11, SCK=12, MISO=13
 //
-// NOT yet mapped (leave invalid until known):
-//   - INMP441 microphone I2S DOUT   (kI2sDout; mic data line unknown)
-// ---------------------------------------------------------------------------
+// WARNING: this is an N16R8 board with octal PSRAM (CONFIG_SPIRAM_MODE_OCT), so
+// GPIO 11-17 and 33-37 are used by internal flash/PSRAM and are NOT usable for
+// the microSD SPI mapping above — that mapping is recorded but LIKELY INVALID
+// and must be re-checked on hardware before wiring SD.
 constexpr int kI2cSda = 8;
 constexpr int kI2cScl = 9;
 
@@ -56,11 +58,15 @@ constexpr int kI2cScl = 9;
 constexpr int kTouchIrq = 2;
 
 // I2S TX to the MAX98357A amplifier.
-constexpr int kI2sBclk = 4;
-constexpr int kI2sWs = 5;    // LRC
-constexpr int kI2sDin = 6;   // DIN -> amp
-// INMP441 (mic) data output line is NOT yet known; -1 keeps RX disabled.
-constexpr int kI2sDout = -1;
+constexpr int kI2sTxBclk = 4;
+constexpr int kI2sTxWs = 5;    // LRC
+constexpr int kI2sTxDin = 6;   // DIN -> amp
+// I2S RX from the INMP441 microphone. Pins chosen by the agent (owner left the
+// mic mapping free) as PSRAM/strapping-safe GPIOs. NOT hardware-verified; the
+// INMP441 needs BCLK + WS + DOUT (3 wires).
+constexpr int kI2sRxBclk = 18;
+constexpr int kI2sRxWs = 47;
+constexpr int kI2sRxDout = 21;
 
 // microSD (SPI) — recorded for reference only; no SD driver is wired yet.
 [[maybe_unused]] constexpr int kSdCs = 10;
@@ -94,7 +100,8 @@ extern "C" void app_main(void) {
 
     // --- Audio (I2S) --------------------------------------------------------
     hal::I2sAudioDevice audio;
-    if (!audio.begin({kI2sBclk, kI2sWs, kI2sDin, kI2sDout}))
+    if (!audio.begin({kI2sTxBclk, kI2sTxWs, kI2sTxDin,
+                      kI2sRxBclk, kI2sRxWs, kI2sRxDout}))
         ESP_LOGW(kTag, "audio init failed (stub until pins known)");
 
     // --- Device API client --------------------------------------------------

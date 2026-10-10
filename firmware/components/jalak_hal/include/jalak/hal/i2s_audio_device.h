@@ -16,11 +16,18 @@
 
 namespace jalak::hal {
 
+// Separate TX (amp) and RX (mic) pin groups. On the Jalak board these are two
+// distinct I2S controllers because they use different BCLK/WS lines. If a future
+// revision shares BCLK/WS, set the same numbers in both groups.
 struct I2sPins {
-    int bclk = -1;
-    int ws = -1;
-    int din = -1;   // mic data in
-    int dout = -1;  // amp data out
+    // TX -> MAX98357A amplifier (speaker out).
+    int tx_bclk = -1;
+    int tx_ws = -1;
+    int tx_din = -1;   // data OUT to the amp
+    // RX <- INMP441 microphone.
+    int rx_bclk = -1;
+    int rx_ws = -1;
+    int rx_dout = -1;  // data IN from the mic
 };
 
 class I2sAudioDevice final : public AudioSource, public AudioSink {

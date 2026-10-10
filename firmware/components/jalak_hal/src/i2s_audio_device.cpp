@@ -23,8 +23,14 @@ std::size_t max_capture_pcm_bytes() {
 }  // namespace
 
 bool I2sAudioDevice::begin(const I2sPins& pins) {
-    (void)pins;  // real channel/handle setup requires confirmed hardware pins
-    ESP_LOGW(kTag, "I2sAudioDevice::begin is a stub; pin/handle setup UNVERIFIED");
+    // Log the intended wiring so a bench bring-up can confirm it, but do NOT
+    // pass it to the IDF i2s driver yet: the real channel/handle setup is
+    // UNVERIFIED and must be validated on hardware first.
+    ESP_LOGW(kTag,
+             "I2sAudioDevice::begin stub — TX(bclk=%d ws=%d din=%d) "
+             "RX(bclk=%d ws=%d dout=%d); handle setup UNVERIFIED",
+             pins.tx_bclk, pins.tx_ws, pins.tx_din,
+             pins.rx_bclk, pins.rx_ws, pins.rx_dout);
     return false;
 }
 
