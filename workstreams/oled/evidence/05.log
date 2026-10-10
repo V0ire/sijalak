@@ -1,0 +1,25 @@
+[ 16%] Building CXX object CMakeFiles/oled_existing_logic.dir/home/caradhina/Projects/sijalak2/firmware/components/jalak_logic/src/framebuffer.cpp.o
+[ 16%] Building CXX object CMakeFiles/oled_existing_logic.dir/home/caradhina/Projects/sijalak2/firmware/components/jalak_logic/src/expression.cpp.o
+[ 25%] Building CXX object CMakeFiles/oled_existing_logic.dir/home/caradhina/Projects/sijalak2/firmware/components/jalak_logic/src/state_machine.cpp.o
+/home/caradhina/Projects/sijalak2/firmware/components/jalak_logic/src/framebuffer.cpp: In member function ‘std::vector<unsigned char> jalak::Framebuffer::to_page_bytes() const’:
+/home/caradhina/Projects/sijalak2/firmware/components/jalak_logic/src/framebuffer.cpp:96:50: warning: conversion from ‘unsigned int’ to ‘uint8_t’ {aka ‘unsigned char’} may change value [-Wconversion]
+   96 |                 if (get(x, y)) byte |= (1u << bit);
+      |                                                  ^
+[ 33%] Building CXX object CMakeFiles/oled_existing_logic.dir/home/caradhina/Projects/sijalak2/firmware/components/jalak_logic/src/oled_codec.cpp.o
+/home/caradhina/Projects/sijalak2/firmware/components/jalak_logic/src/oled_codec.cpp: In function ‘std::vector<jalak::OledTransaction> jalak::oled_init_sequence(const OledPanel&)’:
+/home/caradhina/Projects/sijalak2/firmware/components/jalak_logic/src/oled_codec.cpp:43:48: warning: narrowing conversion of ‘((((int)panel.jalak::OledPanel::height) > 32) ? 18 : 2)’ from ‘int’ to ‘unsigned char’ [-Wnarrowing]
+   43 |     out.push_back(cmd({0xDA, panel.height > 32 ? 0x12 : 0x02}));  // COM pins config
+      |                              ~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+/home/caradhina/Projects/sijalak2/firmware/components/jalak_logic/src/oled_codec.cpp:43:48: warning: narrowing conversion of ‘((((int)panel.jalak::OledPanel::height) > 32) ? 18 : 2)’ from ‘int’ to ‘unsigned char’ [-Wnarrowing]
+[ 41%] Linking CXX static library liboled_existing_logic.a
+[ 41%] Built target oled_existing_logic
+[ 58%] Building CXX object CMakeFiles/oled_character.dir/home/caradhina/Projects/sijalak2/firmware/components/jalak_oled/src/character.cpp.o
+[ 58%] Building CXX object CMakeFiles/oled_character.dir/home/caradhina/Projects/sijalak2/firmware/components/jalak_oled/src/adapter.cpp.o
+[ 66%] Linking CXX static library liboled_character.a
+[ 66%] Built target oled_character
+[ 83%] Building CXX object CMakeFiles/oled_tests.dir/tests.cpp.o
+[ 83%] Building CXX object CMakeFiles/oled_render.dir/render_preview.cpp.o
+[ 91%] Linking CXX executable oled_render
+[ 91%] Built target oled_render
+[100%] Linking CXX executable oled_tests
+[100%] Built target oled_tests

@@ -1,0 +1,1 @@
+{"scope":"host-only rendering plus page packing, no panel","iterations":10000,"total_us":232702,"mean_us":23.2702,"adapter_object_bytes":112,"framebuffer_payload_bytes":8192,"page_payload_bytes":1024}

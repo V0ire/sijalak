@@ -1,0 +1,11 @@
+test_child_never_exports_capture_or_network_state (__main__.PreviewContract.test_child_never_exports_capture_or_network_state) ... ok
+test_gif_every_decoded_frame_and_duration_match_cpp (__main__.PreviewContract.test_gif_every_decoded_frame_and_duration_match_cpp) ... ok
+test_manifest_contiguous_all_states (__main__.PreviewContract.test_manifest_contiguous_all_states) ... ok
+test_pngs_and_every_atlas_pixel_match_cpp (__main__.PreviewContract.test_pngs_and_every_atlas_pixel_match_cpp) ... ok
+test_provenance_matches_current_source (__main__.PreviewContract.test_provenance_matches_current_source) ... ok
+test_stopped_handoff_and_denied_are_static (__main__.PreviewContract.test_stopped_handoff_and_denied_are_static) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 2.374s
+
+OK

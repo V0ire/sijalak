@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "diagram_type": "architecture",
+  "output": "sijalak-architecture.html",
+  "specification": {"path": "sijalak-architecture.json", "sha256": "83e3471306f5e7ed7b8c6cca2fdb2b0881d0703f15e8dba22bf30f2d750d50ce", "bytes": 4351},
+  "artifact": {"sha256": "b713cc589dede07d64f8581170d5f3483056c592fb8760030ece9eb5ce0541e5", "bytes": 721592},
+  "validation": {"profile": "showcase", "checksPassed": 9, "checkCount": 9, "errors": 0, "warnings": 0},
+  "browser_evidence": {"status": "passed", "receipt": "sijalak-architecture.visual-check.json", "viewports": [[1440,900],[1600,1000],[1920,1080],[2048,1320]], "source": "canonical visual-check READ/Still", "canonical_visual_review": "pending"},
+  "visual_review": {
+    "status": "passed",
+    "basis": "Image-capable inspection of four actual light/dark endpoint screenshots, separate from automated status",
+    "screenshots": ["sijalak-architecture.visual-check.1440x900.light.png", "sijalak-architecture.visual-check.1440x900.dark.png", "sijalak-architecture.visual-check.2048x1320.light.png", "sijalak-architecture.visual-check.2048x1320.dark.png"],
+    "post_delivery_correction_rounds": 0,
+    "pre_delivery_source_edits": 5
+  },
+  "supplementary_manual_browser": {
+    "artifact_sha256": "b713cc589dede07d64f8581170d5f3483056c592fb8760030ece9eb5ce0541e5",
+    "served_artifact_unchanged": true,
+    "scope": "temporary loopback static diagrams, stopped after QA",
+    "theme": ["Light","Dark","Light"],
+    "zoom": ["100%","125%","100%"],
+    "export_menu_opened": true,
+    "export_download_clipboard_execution": "not tested",
+    "keyboard_focus": {"element": "main SVG", "focus_visible": true, "outline": "auto 5px"},
+    "mobile": {"viewport": [375,812], "scrollWidth": 360, "scrollHeight": 991, "horizontal_overflow": false, "vertical_scroll": "allowed"},
+    "toolbar_contrast": {"selectors": ["button[aria-label='Toggle color theme']","button[aria-label='Enter presentation stage']","button[aria-label='Export diagram']"], "method": "settled themes; RGBA through ancestors", "light_min": 10.32, "dark_min": 14.59, "transition_ms": 150, "full_svg_wcag_audit": "not performed"},
+    "console": {"diagram_js_errors_observed": 0, "favicon_404": 1},
+    "html_lang": "en",
+    "authored_language": "id"
+  },
+  "scope_guards": {"application_implementation": false, "cad_stl_gcode": false, "ai_concept_images": false, "api_vps_model_calls": false, "installs": false, "git": false, "global_configuration_changes": false, "graphify_enabled": false}
+}

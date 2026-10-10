@@ -1,0 +1,48 @@
+UpdateCTestConfiguration  from :/home/caradhina/Projects/sijalak2/workstreams/oled/build/DartConfiguration.tcl
+Test project /home/caradhina/Projects/sijalak2/workstreams/oled/build
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: oled_contracts
+
+1: Test command: /home/caradhina/Projects/sijalak2/workstreams/oled/build/oled_tests
+1: Working Directory: /home/caradhina/Projects/sijalak2/workstreams/oled/build
+1: Test timeout computed to be: 10000000
+1: PASS all nine states render bounded monochrome frames
+1: PASS all states remain distinct without caption or animation
+1: PASS ready idle blink closes briefly and returns exactly
+1: PASS reduced motion preserves state and removes idle/pipeline motion
+1: PASS boot opens once then holds without auto-ready
+1: PASS stop deterministic across time stale flags and expression
+1: PASS handoff is immediately still and does not solicit
+1: PASS child-local denies all adult pipeline states and capture flags
+1: PASS child-local disclosure remains visible in allowed states
+1: PASS microphone cue requires actual exclusive capture
+1: PASS capture icon persists for every animation phase
+1: PASS speech envelope only affects actual playback and clamps
+1: PASS invalid state and profile fail closed
+1: PASS wild expression values bounded and wink supported
+1: PASS wrong framebuffer geometry is rejected untouched
+1: PASS pure large timestamps reduce before narrowing
+1: PASS default adapter is child-local and rate bounded
+1: PASS animation cadence drops missed frames without catch-up
+1: PASS state and capture edges bypass cadence and busy audio
+1: PASS stop replaces pending frame immediately from every state
+1: PASS display failure retains latest frame and can recover
+1: PASS ordinary dirty animation yields but stop present bypasses
+1: PASS unchanged and quiet frames avoid bus writes
+1: PASS clock64 rollover preserves cadence and animation
+1: PASS clock32 extension crosses wrap and drives same frame
+1: PASS existing state machine bridge preserves expressions and transitions
+1: PASS packed pages match existing framebuffer mock and both codecs
+1: PASS render update and nonallocating display have no hot-path allocations
+1: RESULT: 28 passed, 0 failed, 82202 assertions
+1/1 Test #1: oled_contracts ...................   Passed    0.03 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   0.03 sec

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Jalak OLED · renderer evidence</title>
+  <style>
+    :root { color-scheme: light; --paper: white; --ink: black; --muted: #444; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.55 system-ui,sans-serif; }
+    main { max-width: 1100px; margin: auto; padding: 32px 24px 64px; }
+    h1 { margin: 0 0 12px; font-size: clamp(26px,4vw,40px); line-height: 1.15; letter-spacing: -.02em; }
+    h2 { margin: 0 0 12px; font-size: 21px; }
+    p { max-width: 70ch; margin: 0 0 20px; }
+    .workbench { display: grid; grid-template-columns: minmax(0,512px) minmax(250px,1fr); gap: 32px; margin: 32px 0; align-items: start; }
+    figure { margin: 0; }
+    canvas, .still { width: 100%; max-width: 512px; height: auto; aspect-ratio: 2; display: block; background: var(--ink); image-rendering: pixelated; }
+    canvas[hidden], .still[hidden] { display: none; }
+    figcaption { font-size: 14px; color: var(--muted); margin-top: 10px; }
+    label { display: block; font-weight: 650; margin: 0 0 6px; }
+    select { width: 100%; min-height: 44px; margin-bottom: 18px; border: 1px solid var(--ink); border-radius: 0; background: var(--paper); color: var(--ink); padding: 8px; font: inherit; }
+    .buttons { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 18px; }
+    button { min-height: 44px; border: 1px solid var(--ink); border-radius: 0; padding: 8px 15px; font: inherit; cursor: pointer; background: var(--paper); color: var(--ink); }
+    button:hover { text-decoration: underline; text-underline-offset: 4px; }
+    #toggle { background: var(--ink); color: var(--paper); }
+    button:disabled { cursor: default; opacity: .6; }
+    :focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
+    ::selection { background: var(--ink); color: var(--paper); }
+    input[type=range] { width: 100%; height: 32px; accent-color: var(--ink); }
+    output, .technical { font-variant-numeric: tabular-nums; }
+    output { display: block; font-size: 15px; }
+    a { color: var(--ink); text-underline-offset: 3px; }
+    .note { color: var(--muted); font-size: 14px; margin-top: 16px; }
+    .sheet { width: 100%; height: auto; margin-top: 8px; }
+    #failure { font-weight: bold; }
+    @media(max-width:800px) { .workbench { grid-template-columns: minmax(0,1fr); gap: 24px; } main { padding: 24px 16px 40px; } }
+    @media(prefers-reduced-motion:reduce) { *, *::before, *::after { scroll-behavior: auto; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Jalak’s OLED character</h1>
+  <p>These are the actual renderer’s 128 × 64 monochrome pixels. Inspect each state, step through a blink, or interrupt speech with STOP. Previews use synthetic state and playback-envelope fixtures.</p>
+  <div class="workbench">
+    <figure>
+      <img class="still" id="fallback" src="stills/ready.png" width="128" height="64" alt="Jalak READY frame with broad eyes, unequal crest marks and SIAP caption">
+      <canvas id="screen" width="128" height="64" role="img" aria-label="Jalak OLED framebuffer" hidden></canvas>
+      <figcaption>128 × 64 pixels, enlarged without smoothing. The physical display is not this size.</figcaption>
+    </figure>
+    <section aria-labelledby="controls-heading">
+      <h2 id="controls-heading">Inspect rendered frames</h2>
+      <label for="clip">State or sequence</label>
+      <select id="clip"><option value="boot">BOOT / MULAI</option>
+<option value="ready">READY / SIAP</option>
+<option value="listening">LISTENING / REKAM</option>
+<option value="uploading">UPLOADING / KIRIM</option>
+<option value="processing">PROCESSING / PROSES</option>
+<option value="speaking">SPEAKING / SUARA</option>
+<option value="stopped">STOPPED / STOP</option>
+<option value="error">ERROR / GALAT</option>
+<option value="book-handoff">BOOK_HANDOFF / BUKU</option>
+<option value="local-boot">LOCAL / MULAI</option>
+<option value="local-ready">LOCAL / SIAP</option>
+<option value="local-speaking">LOCAL / SUARA</option>
+<option value="local-stopped">LOCAL / STOP</option>
+<option value="local-error">LOCAL / GALAT</option>
+<option value="local-book">LOCAL / BUKU</option>
+<option value="local-denied">LOCAL / capture request rejected</option>
+<option value="adult-flow">Adult state sequence (host fixture)</option>
+<option value="local-flow">Local state sequence (host fixture)</option>
+<option value="stop-interrupt">STOP replaces speaking without transition</option></select>
+      <label for="frame">Frame</label>
+      <input id="frame" type="range" min="0" max="0" value="0" step="1" aria-describedby="position">
+      <output id="position" for="clip frame">Loading actual framebuffer…</output>
+      <div class="buttons">
+        <button id="toggle" type="button" disabled>Play</button>
+        <button id="stop" type="button">Show STOP</button>
+      </div>
+      <p id="failure" role="alert" hidden></p>
+      <p class="note">Playback starts only on request and pauses when this tab is hidden. Reduced-motion preference keeps playback paused. BOOK_HANDOFF is still from its first frame.</p>
+      <a id="download" href="animations/ready.gif">Open this sequence as GIF</a>
+    </section>
+  </div>
+  <h2>State contact sheet</h2>
+  <p>Shape, posture and persistent activity symbols distinguish states without color. Local frames carry a book marker; local READY and SPEAKING also say LOKAL. A forbidden capture request shows GALAT LOKAL.</p>
+  <a href="contact-sheet.png"><img class="sheet" src="contact-sheet.png" width="1600" height="2030" alt="Sixteen actual framebuffer states: all nine adult states, six local states and a rejected local capture request"></a>
+  <h2>Evidence boundary</h2>
+  <p>Host preview only. Display controller, address, pinout, column offset, physical contrast, 0.5 m readability, device FPS and audio-task timing remain unverified. The renderer does not stop audio hardware or enforce firmware deployment isolation.</p>
+  <p><a href="provenance.json">Source and framebuffer hashes</a> · <a href="host-metrics.json">Host measurements</a> · <a href="frames.json">Frame manifest</a></p>
+  <noscript><p>JavaScript is disabled. The READY still and contact sheet above remain available; use the GIF link for animation.</p></noscript>
+</main>
+<script id="manifest" type="application/json">{"width": 128, "height": 64, "format": "page-lsb-top", "frame_bytes": 1024, "duration_ms": 100, "clips": [{"name": "boot", "label": "BOOT / MULAI", "profile": "adult-lab", "offset": 0, "count": 30, "still": 7, "visible_states": ["Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot"]}, {"name": "ready", "label": "READY / SIAP", "profile": "adult-lab", "offset": 30720, "count": 50, "still": 7, "visible_states": ["Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready"]}, {"name": "listening", "label": "LISTENING / REKAM", "profile": "adult-lab", "offset": 81920, "count": 30, "still": 7, "visible_states": ["Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening"]}, {"name": "uploading", "label": "UPLOADING / KIRIM", "profile": "adult-lab", "offset": 112640, "count": 30, "still": 7, "visible_states": ["Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading"]}, {"name": "processing", "label": "PROCESSING / PROSES", "profile": "adult-lab", "offset": 143360, "count": 30, "still": 7, "visible_states": ["Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing"]}, {"name": "speaking", "label": "SPEAKING / SUARA", "profile": "adult-lab", "offset": 174080, "count": 30, "still": 4, "visible_states": ["Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking"]}, {"name": "stopped", "label": "STOPPED / STOP", "profile": "adult-lab", "offset": 204800, "count": 30, "still": 7, "visible_states": ["Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped"]}, {"name": "error", "label": "ERROR / GALAT", "profile": "adult-lab", "offset": 235520, "count": 30, "still": 7, "visible_states": ["Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error"]}, {"name": "book-handoff", "label": "BOOK_HANDOFF / BUKU", "profile": "adult-lab", "offset": 266240, "count": 30, "still": 7, "visible_states": ["BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff"]}, {"name": "local-boot", "label": "LOCAL / MULAI", "profile": "child-local", "offset": 296960, "count": 30, "still": 7, "visible_states": ["Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot"]}, {"name": "local-ready", "label": "LOCAL / SIAP", "profile": "child-local", "offset": 327680, "count": 50, "still": 7, "visible_states": ["Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready"]}, {"name": "local-speaking", "label": "LOCAL / SUARA", "profile": "child-local", "offset": 378880, "count": 30, "still": 4, "visible_states": ["Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking"]}, {"name": "local-stopped", "label": "LOCAL / STOP", "profile": "child-local", "offset": 409600, "count": 30, "still": 7, "visible_states": ["Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped"]}, {"name": "local-error", "label": "LOCAL / GALAT", "profile": "child-local", "offset": 440320, "count": 30, "still": 7, "visible_states": ["Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error"]}, {"name": "local-book", "label": "LOCAL / BUKU", "profile": "child-local", "offset": 471040, "count": 30, "still": 7, "visible_states": ["BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff"]}, {"name": "local-denied", "label": "LOCAL / capture request rejected", "profile": "child-local", "offset": 501760, "count": 20, "still": 0, "visible_states": ["Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error"]}, {"name": "adult-flow", "label": "Adult state sequence (host fixture)", "profile": "adult-lab", "offset": 522240, "count": 170, "still": 0, "visible_states": ["Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Listening", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Uploading", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Processing", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff"]}, {"name": "local-flow", "label": "Local state sequence (host fixture)", "profile": "child-local", "offset": 696320, "count": 80, "still": 0, "visible_states": ["Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Ready", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff", "BookHandoff"]}, {"name": "stop-interrupt", "label": "STOP replaces speaking without transition", "profile": "adult-lab", "offset": 778240, "count": 30, "still": 10, "visible_states": ["Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Speaking", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped"]}]}</script>
+<script src="viewer.js"></script>
+</body>
+</html>

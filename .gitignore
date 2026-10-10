@@ -1,0 +1,46 @@
+# Si Jalak Bedas — .gitignore
+# Build artifacts, internal tooling, and generated media that must NOT be tracked.
+
+# --- Build output / temp -------------------------------------------------
+.buildtmp/
+*.o
+*.a
+*.elf
+*.bin
+*.map
+*.obj
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+cmake-build-*/
+build/
+build-sanitize/
+sdkconfig
+sdkconfig.old
+managed_components/
+dependencies.lock
+
+# --- Internal tooling / runtime (NOT part of the product) ----------------
+.opencode/
+.playwright-mcp/
+
+# --- OS / editor noise ---------------------------------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+
+# --- Generated media / heavy binaries ------------------------------------
+exports/oled/frames.raw
+exports/*.zip
+workstreams/oled/tmp/
+workstreams/oled/build/
+workstreams/oled/build-sanitize/
+
+# --- Local env -----------------------------------------------------------
+.env
+.env.*
+*.local

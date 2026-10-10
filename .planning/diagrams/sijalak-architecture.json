@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Si Jalak Bedas — Arsitektur rencana",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [1390, 790]
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [70, 110],
+    "cols": 4,
+    "cellW": 220,
+    "cellH": 88,
+    "gapX": 125,
+    "gapY": 155
+  },
+  "components": [
+    {"id": "adult_capture", "type": "frontend", "label": "Input suara robot", "sublabel": "PTT + INMP441", "tag": "WAV 16 kHz", "size": [220, 60], "row": 0, "col": 0},
+    {"id": "vps_ingress", "type": "backend", "label": "Gateway VPS", "sublabel": "Identitas, sesi, batas biaya", "tag": "API usulan", "size": [220, 88], "row": 0, "col": 1},
+    {"id": "speech_transcript", "type": "cloud", "label": "STT", "sublabel": "Gemini · transkripsi", "tag": "Perlu verifikasi", "size": [220, 60], "row": 0, "col": 2},
+    {"id": "dialogue_model", "type": "cloud", "label": "Dialog AI", "sublabel": "Gemini · konteks terbatas", "tag": "Maks. 35 kata", "size": [220, 60], "row": 0, "col": 3},
+    {"id": "reply_policy", "type": "security", "label": "Validasi respons", "sublabel": "VPS · schema, topik, buku", "tag": "Bukan prompt saja", "size": [220, 60], "row": 1, "col": 3},
+    {"id": "speech_synthesis", "type": "cloud", "label": "TTS", "sublabel": "Gemini · sintesis suara", "tag": "Perlu verifikasi", "size": [220, 60], "row": 1, "col": 2},
+    {"id": "vps_egress", "type": "backend", "label": "Audio dari VPS", "sublabel": "Normalisasi + ID giliran", "tag": "Tolak sesi lama", "size": [220, 60], "row": 1, "col": 1},
+    {"id": "adult_output", "type": "frontend", "label": "Respons robot", "sublabel": "OLED + MAX98357A", "tag": "STOP / reset", "size": [220, 60], "row": 1, "col": 0},
+    {"id": "curated_assets", "type": "database", "label": "Konten manusia", "sublabel": "Audio dan katalog terkurasi", "tag": "Flash / microSD", "size": [220, 60], "row": 2, "col": 0},
+    {"id": "child_local", "type": "frontend", "label": "Robot lokal", "sublabel": "Profil anak terpisah", "tag": "Tanpa capture / cloud AI", "size": [220, 60], "row": 2, "col": 1},
+    {"id": "physical_book", "type": "external", "label": "Buku fisik", "sublabel": "Pilihan yang tersedia", "tag": "Handoff, lalu tenang", "size": [220, 60], "row": 2, "col": 3}
+  ],
+  "boundaries": [
+    {"kind": "region", "label": "R&D internal dewasa 18+ — kelayakan provider perlu diperiksa", "wraps": ["adult_capture", "vps_ingress", "speech_transcript", "dialogue_model", "reply_policy", "speech_synthesis", "vps_egress", "adult_output"], "pad": 36},
+    {"kind": "security-group", "label": "Pilot anak lokal — tanpa Gemini, penangkapan suara, atau AI jaringan", "wraps": ["curated_assets", "child_local", "physical_book"], "pad": 36}
+  ],
+  "connections": [
+    {"id": "capture_to_gateway", "from": "adult_capture", "to": "vps_ingress", "label": "HTTPS / WAV", "variant": "emphasis"},
+    {"id": "gateway_to_stt", "from": "vps_ingress", "to": "speech_transcript", "label": "Transkripsi", "variant": "emphasis"},
+    {"id": "transcript_to_dialogue", "from": "speech_transcript", "to": "dialogue_model", "label": "Teks pengguna", "variant": "emphasis"},
+    {"id": "dialogue_to_policy", "from": "dialogue_model", "to": "reply_policy", "label": "JSON respons", "variant": "security", "labelDy": 24},
+    {"id": "policy_to_tts", "from": "reply_policy", "to": "speech_synthesis", "label": "Lolos batas", "variant": "security"},
+    {"id": "tts_to_gateway", "from": "speech_synthesis", "to": "vps_egress", "label": "Audio provider", "variant": "emphasis"},
+    {"id": "gateway_to_output", "from": "vps_egress", "to": "adult_output", "label": "HTTPS / WAV", "variant": "emphasis"},
+    {"id": "assets_to_child", "from": "curated_assets", "to": "child_local", "label": "Audio kurasi"},
+    {"id": "child_to_book", "from": "child_local", "to": "physical_book", "label": "Ajakan membaca"}
+  ],
+  "cards": [
+    {"dot": "amber", "title": "Rencana, bukan deployment", "items": ["VPS/API dilaporkan tersedia; kontrak dan model belum diuji.", "URL VPS belum diketahui. /sijalak/v1 hanya path usulan."]},
+    {"dot": "emerald", "title": "Dua profil, satu tujuan literasi", "items": ["API key provider hanya di VPS; tidak ada pendamping operasional.", "Membantu mulai membaca tetap hipotesis, bukan hasil pilot."]}
+  ]
+}

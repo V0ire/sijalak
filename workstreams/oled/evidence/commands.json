@@ -1,0 +1,122 @@
+{
+  "started_utc": "2026-10-09T20:00:17.940805+00:00",
+  "scope": "isolated OLED host workstream",
+  "commands": [
+    {
+      "argv": [
+        "cmake",
+        "-S",
+        "workstreams/oled",
+        "-B",
+        "workstreams/oled/build",
+        "-DCMAKE_BUILD_TYPE=Release"
+      ],
+      "exit_code": 0,
+      "log": "evidence/01.log"
+    },
+    {
+      "argv": [
+        "cmake",
+        "--build",
+        "workstreams/oled/build",
+        "-j2"
+      ],
+      "exit_code": 0,
+      "log": "evidence/02.log"
+    },
+    {
+      "argv": [
+        "ctest",
+        "--test-dir",
+        "workstreams/oled/build",
+        "--output-on-failure",
+        "-V"
+      ],
+      "exit_code": 0,
+      "log": "evidence/03.log"
+    },
+    {
+      "argv": [
+        "cmake",
+        "-S",
+        "workstreams/oled",
+        "-B",
+        "workstreams/oled/build-sanitize",
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DOLED_SANITIZERS=ON"
+      ],
+      "exit_code": 0,
+      "log": "evidence/04.log"
+    },
+    {
+      "argv": [
+        "cmake",
+        "--build",
+        "workstreams/oled/build-sanitize",
+        "-j2"
+      ],
+      "exit_code": 0,
+      "log": "evidence/05.log"
+    },
+    {
+      "argv": [
+        "ctest",
+        "--test-dir",
+        "workstreams/oled/build-sanitize",
+        "--output-on-failure",
+        "-V"
+      ],
+      "exit_code": 0,
+      "log": "evidence/06.log"
+    },
+    {
+      "argv": [
+        "workstreams/oled/build/oled_render",
+        "exports/oled"
+      ],
+      "exit_code": 0,
+      "log": "evidence/07.log"
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "workstreams/oled/generate_previews.py"
+      ],
+      "exit_code": 0,
+      "log": "evidence/08.log"
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "workstreams/oled/test_previews.py"
+      ],
+      "exit_code": 0,
+      "log": "evidence/09.log"
+    }
+  ],
+  "existing_inputs_sha256": {
+    "firmware/components/jalak_hal/CMakeLists.txt": "9134faeb140d7c2438fc30089388b32b35e8251289e01d7365dc9d84af6b65fe",
+    "firmware/components/jalak_hal/include/jalak/hal/display.h": "955553243ce4fceef08b4f9935c21b09c057adeeb48945c8cfb368d45c1a4790",
+    "firmware/components/jalak_hal/include/jalak/hal/hal.h": "a51241d9ed4c0c4d27998bcff4da156291603d131d72b742b65703d63a6697d4",
+    "firmware/components/jalak_hal/include/jalak/hal/mock_audio.h": "6cea0884b1b4c7154ff6bd643d8f21957738408935bcdff75995a98e6288130c",
+    "firmware/components/jalak_hal/include/jalak/hal/mock_display.h": "c122cffc5f3c68d62602f94f0214adab894879b57566e2ab65378028b36b8587",
+    "firmware/components/jalak_hal/include/jalak/hal/mock_transport.h": "f7e22afe3535a4c4fdbbb7a5d831c38f21e20267862d9d1e19541598ea37eccd",
+    "firmware/components/jalak_hal/src/placeholder.cpp": "74fc1300b9ecc38208ffed2cc933ee818796d4bec67d04a78c7476beb85b79ce",
+    "firmware/components/jalak_logic/CMakeLists.txt": "1c6d46aa47c82a819113256b65487871b31a5265d9851a61f36f19e7ce10dffb",
+    "firmware/components/jalak_logic/include/jalak/api_client.h": "5efa60997a102ad3826db819545bd57aec1c01d3872630753b0ea481a082aa6a",
+    "firmware/components/jalak_logic/include/jalak/audio.h": "c07d9db7805a053568459dbc4be19ea89033419b435fca70d62ade0212c9139a",
+    "firmware/components/jalak_logic/include/jalak/expression.h": "f71da935ce36477768898d2ad6e8077e735bd80b18b8b54554a80d640b90bbd2",
+    "firmware/components/jalak_logic/include/jalak/framebuffer.h": "ae838ddda4188aa8188bd040cb409dbf894bfe98cfdb5c0e3ebd7bfed1e398f0",
+    "firmware/components/jalak_logic/include/jalak/logic.h": "0e6af620f168a8254606d362eb0f2b66eb0798d06a91c646c818c45722b08b87",
+    "firmware/components/jalak_logic/include/jalak/oled_codec.h": "1fbb13a295f29987fca3e714b7954429beb7511fda4a190f1dc7f70db1fcf8c0",
+    "firmware/components/jalak_logic/include/jalak/state_machine.h": "931d4ee2762f2e99a8491ea0384efe31d4899b69d7dc9f7aca2a17615ecfef59",
+    "firmware/components/jalak_logic/src/api_client.cpp": "1197e7dc009b571b3956046cc4c2b0f4904c58841f5b53724bcd983932b1a8ab",
+    "firmware/components/jalak_logic/src/audio.cpp": "19a34c8172c134c6195ab49d0b2e7fbe45ed019d213c9cb6713a7900cf128b34",
+    "firmware/components/jalak_logic/src/expression.cpp": "f20fd7ed91eed5396416725ac998aebf99e055b9e462f64670f867a052846430",
+    "firmware/components/jalak_logic/src/framebuffer.cpp": "e1f5f89ea1023980bf3dbcf25b3e75bcc993484a9cdaf98e6bef002c9db7ca3a",
+    "firmware/components/jalak_logic/src/oled_codec.cpp": "a3ae65e415a4de05a9ebf7c0b14b8683cc005c5c7634652bd637ec36ac2f7b66",
+    "firmware/components/jalak_logic/src/state_machine.cpp": "75db2f9f1563bf33b1badc4826d3cb7d6c5b77cfa6311160ca3abb26c0ab3b86"
+  },
+  "existing_inputs_unchanged_during_run": true,
+  "exit_code": 0
+}

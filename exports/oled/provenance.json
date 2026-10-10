@@ -1,0 +1,24 @@
+{
+  "pipeline": "C++ Adapter/render -> 1024 page bytes/frame -> PIL decode -> PNG/GIF/atlas -> HTML canvas",
+  "audio": "Synthetic envelope fixtures only. No actual audio or measured lip synchronization.",
+  "raw_sha256": "26a34f55086b66e31a4a7910eedeff223bb28a850e762f98565585dc1a811ad0",
+  "renderer_binary_sha256": "c2d2f70d32c9451af4f006aa87d7c85f91c88af002adc187cbb2cc31a277ccb7",
+  "source_sha256": {
+    "firmware/components/jalak_oled/src/adapter.cpp": "875876e3af3ee282d48cac5042cf543d8c6626d544bf495dce233d1aceaf6c72",
+    "firmware/components/jalak_oled/src/character.cpp": "2df910c3cb906dc912fed444fa9a716057b23624e873dddc081cc7a87e4ed800",
+    "firmware/components/jalak_oled/include/jalak/oled/adapter.h": "f34c626c3e879ef9cb65bb601ed3b0ec975bad2494a2fe6babe20140b81ae09d",
+    "firmware/components/jalak_oled/include/jalak/oled/character.h": "af4a1bcf955920b3ff2af79d1caf0c277a03752ecbea1d4b827e390b08b16dee",
+    "workstreams/oled/render_preview.cpp": "954b7bc04919674b58230ae2e0a6666fbe580770b3767f5ca36cfbaffa3e94e3",
+    "workstreams/oled/generate_previews.py": "51ab500d0afa97a924c4eabda7b793d80eee8e73c8a0d90003545818acacdaf5",
+    "workstreams/oled/viewer.html": "3ee904d8b5e548f80b03473512148ff60fd8ad291511a4fa29b93df859b56544",
+    "workstreams/oled/viewer.js": "fa80b1495ae1225ec3345fd714b6ea8f7b5a3ae9a0b0a5b92c2109dd2aa2540a",
+    "firmware/components/jalak_logic/src/expression.cpp": "f20fd7ed91eed5396416725ac998aebf99e055b9e462f64670f867a052846430",
+    "firmware/components/jalak_logic/include/jalak/expression.h": "f71da935ce36477768898d2ad6e8077e735bd80b18b8b54554a80d640b90bbd2",
+    "firmware/components/jalak_logic/src/framebuffer.cpp": "e1f5f89ea1023980bf3dbcf25b3e75bcc993484a9cdaf98e6bef002c9db7ca3a",
+    "firmware/components/jalak_logic/include/jalak/framebuffer.h": "ae838ddda4188aa8188bd040cb409dbf894bfe98cfdb5c0e3ebd7bfed1e398f0",
+    "firmware/components/jalak_logic/src/state_machine.cpp": "75db2f9f1563bf33b1badc4826d3cb7d6c5b77cfa6311160ca3abb26c0ab3b86",
+    "firmware/components/jalak_logic/include/jalak/state_machine.h": "931d4ee2762f2e99a8491ea0384efe31d4899b69d7dc9f7aca2a17615ecfef59"
+  },
+  "clips": 19,
+  "frames": 790
+}

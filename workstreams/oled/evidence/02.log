@@ -1,0 +1,4 @@
+[ 41%] Built target oled_existing_logic
+[ 66%] Built target oled_character
+[100%] Built target oled_tests
+[100%] Built target oled_render
