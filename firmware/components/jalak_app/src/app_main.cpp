@@ -34,15 +34,39 @@ namespace {
 
 constexpr char kTag[] = "jalak_app";
 
-// Board wiring placeholders. THESE MUST BE REPLACED with confirmed values from
-// the actual hardware before flashing; they are deliberately invalid (-1).
-constexpr int kI2cSda = -1;
-constexpr int kI2cScl = -1;
-constexpr int kTouchIrq = -1;
-constexpr int kI2sBclk = -1;
-constexpr int kI2sWs = -1;
-constexpr int kI2sDin = -1;
+// ---------------------------------------------------------------------------
+// Board wiring — ESP32-S3.
+//
+// These values come from the OWNER-REPORTED pinout. They are still UNVERIFIED
+// against a real board (no hardware test has run) and the OLED controller and
+// I2C address remain unconfirmed. Do NOT treat this as hardware validation.
+//
+//   I2C (OLED):   SDA=8, SCL=9
+//   I2S (amp MAX98357A, TX): BCLK=4, LRC=5, DIN=6
+//   Touch/PTT:    IRQ=2
+//   microSD (SPI, NOT yet driven): CS=10, MOSI=11, SCK=12, MISO=13
+//
+// NOT yet mapped (leave invalid until known):
+//   - INMP441 microphone I2S DOUT   (kI2sDout; mic data line unknown)
+// ---------------------------------------------------------------------------
+constexpr int kI2cSda = 8;
+constexpr int kI2cScl = 9;
+
+// Touch/PTT IRQ line (owner-reported).
+constexpr int kTouchIrq = 2;
+
+// I2S TX to the MAX98357A amplifier.
+constexpr int kI2sBclk = 4;
+constexpr int kI2sWs = 5;    // LRC
+constexpr int kI2sDin = 6;   // DIN -> amp
+// INMP441 (mic) data output line is NOT yet known; -1 keeps RX disabled.
 constexpr int kI2sDout = -1;
+
+// microSD (SPI) — recorded for reference only; no SD driver is wired yet.
+[[maybe_unused]] constexpr int kSdCs = 10;
+[[maybe_unused]] constexpr int kSdMosi = 11;
+[[maybe_unused]] constexpr int kSdSck = 12;
+[[maybe_unused]] constexpr int kSdMiso = 13;
 
 long long now_ms() { return esp_timer_get_time() / 1000; }
 
