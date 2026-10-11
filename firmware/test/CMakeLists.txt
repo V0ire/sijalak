@@ -58,3 +58,43 @@ add_test(NAME jalak_integration COMMAND test_jalak_integration)
 add_executable(test_jalak_oled test_oled.cpp)
 target_link_libraries(test_jalak_oled PRIVATE jalak_logic)
 add_test(NAME jalak_oled COMMAND test_jalak_oled)
+
+add_library(jalak_local STATIC
+  ../components/jalak_local/src/demo.cpp
+  ../components/jalak_local/src/sounds.cpp
+  ../components/jalak_local/src/clip.cpp
+)
+target_include_directories(jalak_local PUBLIC ../components/jalak_local/include)
+target_link_libraries(jalak_local PUBLIC jalak_logic)
+add_executable(test_jalak_local test_local.cpp)
+target_link_libraries(test_jalak_local PRIVATE jalak_local)
+add_test(NAME jalak_local COMMAND test_jalak_local)
+
+add_executable(test_jalak_sounds test_sounds.cpp)
+target_link_libraries(test_jalak_sounds PRIVATE jalak_local)
+add_test(NAME jalak_sounds COMMAND test_jalak_sounds)
+
+add_executable(test_jalak_clip test_clip.cpp)
+target_link_libraries(test_jalak_clip PRIVATE jalak_local)
+add_test(NAME jalak_clip COMMAND test_jalak_clip)
+
+# Compile the real entrypoint body with instrumented boundaries, not an empty TU.
+add_executable(test_jalak_local_app test_local_app.cpp ../components/jalak_app/src/app_main.cpp)
+target_compile_definitions(test_jalak_local_app PRIVATE ESP_PLATFORM)
+target_include_directories(test_jalak_local_app PRIVATE local_boundary ../components/jalak_hal/include)
+target_link_libraries(test_jalak_local_app PRIVATE jalak_local)
+add_test(NAME jalak_local_app_stub COMMAND test_jalak_local_app)
+add_executable(test_jalak_local_app_high test_local_app.cpp ../components/jalak_app/src/app_main.cpp)
+target_compile_definitions(test_jalak_local_app_high PRIVATE ESP_PLATFORM TEST_ACTIVE_HIGH_SH1106)
+target_include_directories(test_jalak_local_app_high PRIVATE local_boundary ../components/jalak_hal/include)
+target_link_libraries(test_jalak_local_app_high PRIVATE jalak_local)
+add_test(NAME jalak_local_app_high_stub COMMAND test_jalak_local_app_high)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+add_test(NAME jalak_local_source_guard COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_local_safety.py)
+
+add_executable(jalak_local_preview ../preview/local_runner.cpp)
+target_link_libraries(jalak_local_preview PRIVATE jalak_local)
+set_target_properties(jalak_local test_jalak_local jalak_local_preview
+  test_jalak_local_app test_jalak_local_app_high PROPERTIES CXX_STANDARD 17)
+add_test(NAME jalak_local_preview_api COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../preview/test_preview.py --runner $<TARGET_FILE:jalak_local_preview>)

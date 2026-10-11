@@ -44,3 +44,11 @@ workstreams/oled/build-sanitize/
 .env
 .env.*
 *.local
+
+# --- Third-party demo assets (Watcher Mochi GIFs, Dasai; pop sound) -------
+# Generated locally by tools/mochi_assets.py from assets licensed for personal
+# use only. Never commit or redistribute these.
+firmware/preview/assets/
+firmware/preview/assets/**
+*.pcm
+!firmware/preview/assets/.gitkeep

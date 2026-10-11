@@ -1,16 +1,19 @@
 # jalak_hal: abstract interfaces + mocks (portable) + IDF-backed drivers.
 #
-# The IDF driver sources compile to nothing unless ESP_PLATFORM is defined (their
-# bodies are wrapped in `#if defined(ESP_PLATFORM)`), so listing them is safe for
-# host-only usage too. They require IDF driver headers only when built by idf.py.
+# LOCAL DEMO build: only the OLED, GPIO touch, I2S speaker (TX), and SD drivers
+# are registered here. The voice/cloud drivers (esp_http_transport) stay OUT of
+# the default build, and the mic (RX) is disabled in app_main.
+#
+# The IDF driver sources compile to nothing unless ESP_PLATFORM is defined, so
+# listing them is safe for host-only usage too.
 idf_component_register(
     SRCS
         "src/placeholder.cpp"
         "src/i2c_oled_display.cpp"
         "src/touch_input.cpp"
         "src/i2s_audio_device.cpp"
-        "src/esp_http_transport.cpp"
+        "src/sd_card.cpp"
     INCLUDE_DIRS "include"
     REQUIRES jalak_logic
-    PRIV_REQUIRES esp_driver_i2c esp_driver_i2s esp_driver_gpio esp_http_client esp_timer
+    PRIV_REQUIRES esp_driver_i2c esp_driver_i2s esp_driver_gpio esp_driver_spi esp_driver_sdspi sdmmc fatfs
 )
