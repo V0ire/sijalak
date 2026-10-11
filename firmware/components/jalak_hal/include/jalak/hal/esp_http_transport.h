@@ -32,6 +32,11 @@ public:
     jalak::HttpResult get_turn(const std::string& turn_id) override;
     jalak::HttpResult get_audio(const std::string& turn_id) override;
 
+    // POST /v1/session -> returns the new session_id on success (200 + JSON).
+    // Not part of jalak::HttpTransport (that interface is turn-shaped); this is
+    // the device's session bootstrap. Returns "" on any failure.
+    std::string create_session();
+
     // Cooperative cancel: flips the flag checked between internal operations.
     void request_abort() { abort_.store(true, std::memory_order_relaxed); }
     void reset_abort() { abort_.store(false, std::memory_order_relaxed); }

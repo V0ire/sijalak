@@ -12,5 +12,5 @@ idf_component_register(
         "src/esp_http_transport.cpp"
     INCLUDE_DIRS "include"
     REQUIRES jalak_logic
-    PRIV_REQUIRES driver esp_http_client esp_timer
+    PRIV_REQUIRES esp_driver_i2c esp_driver_i2s esp_driver_gpio esp_http_client esp_timer
 )

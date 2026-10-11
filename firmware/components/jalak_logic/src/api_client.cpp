@@ -230,6 +230,74 @@ std::optional<std::string> json_get_string(const std::string& json, const std::s
     return scan_string(json, key);
 }
 
+std::string base64_encode(const std::uint8_t* data, std::size_t len) {
+    static const char kAlphabet[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    std::string out;
+    out.reserve(((len + 2) / 3) * 4);
+    std::size_t i = 0;
+    for (; i + 3 <= len; i += 3) {
+        const std::uint32_t n =
+            (static_cast<std::uint32_t>(data[i]) << 16) |
+            (static_cast<std::uint32_t>(data[i + 1]) << 8) |
+            static_cast<std::uint32_t>(data[i + 2]);
+        out.push_back(kAlphabet[(n >> 18) & 0x3F]);
+        out.push_back(kAlphabet[(n >> 12) & 0x3F]);
+        out.push_back(kAlphabet[(n >> 6) & 0x3F]);
+        out.push_back(kAlphabet[n & 0x3F]);
+    }
+    const std::size_t rem = len - i;
+    if (rem == 1) {
+        const std::uint32_t n = static_cast<std::uint32_t>(data[i]) << 16;
+        out.push_back(kAlphabet[(n >> 18) & 0x3F]);
+        out.push_back(kAlphabet[(n >> 12) & 0x3F]);
+        out.push_back('=');
+        out.push_back('=');
+    } else if (rem == 2) {
+        const std::uint32_t n = (static_cast<std::uint32_t>(data[i]) << 16) |
+                                (static_cast<std::uint32_t>(data[i + 1]) << 8);
+        out.push_back(kAlphabet[(n >> 18) & 0x3F]);
+        out.push_back(kAlphabet[(n >> 12) & 0x3F]);
+        out.push_back(kAlphabet[(n >> 6) & 0x3F]);
+        out.push_back('=');
+    }
+    return out;
+}
+
+std::string base64_encode(const std::vector<std::uint8_t>& bytes) {
+    return base64_encode(bytes.data(), bytes.size());
+}
+
+std::string build_turn_request_body(const std::string& session_id,
+                                    const std::string& idempotency_key,
+                                    const std::vector<std::uint8_t>& wav_bytes) {
+    auto esc = [](const std::string& s) {
+        std::string o;
+        o.reserve(s.size());
+        for (char c : s) {
+            if (c == '"' || c == '\\') o.push_back('\\');
+            o.push_back(c);
+        }
+        return o;
+    };
+    std::string body;
+    body.reserve(wav_bytes.size() * 4 / 3 + 96);
+    body += "{\"session_id\":\"";
+    body += esc(session_id);
+    body += "\",\"idempotency_key\":\"";
+    body += esc(idempotency_key);
+    body += "\",\"wav_base64\":\"";
+    body += base64_encode(wav_bytes);
+    body += "\"}";
+    return body;
+}
+
+std::optional<std::string> parse_session_id(const std::string& body) {
+    auto sid = scan_string(body, "session_id");
+    if (!sid || sid->empty()) return std::nullopt;
+    return sid;
+}
+
 // ---------------------------------------------------------------------------
 
 bool RetryPolicy::retry_on_status(int http_status) const {

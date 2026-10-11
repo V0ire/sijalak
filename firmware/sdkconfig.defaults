@@ -1,4 +1,24 @@
+# Si Jalak Bedas — ESP-IDF defaults for the ESP32-S3 N16R8 board.
+# N16R8 = 16 MB flash, 8 MB octal (OCT) PSRAM.
+#
+# These are the canonical settings for that module. They are UNVERIFIED on the
+# real board (no hardware test has run); adjust only from measured evidence.
+
 CONFIG_IDF_TARGET="esp32s3"
+
+# 16 MB flash.
 CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+
+# Octal PSRAM (8 MB). OCT mode also implies the flash runs in a mode that uses
+# the same SPI0/1 peripheral lines — keep the default DIO/QIO flash mode unless
+# hardware evidence says otherwise.
 CONFIG_SPIRAM=y
 CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_TYPE_AUTO=y
+CONFIG_SPIRAM_SPEED_80M=y
+
+# Main task stack in internal RAM; large buffers should use PSRAM explicitly.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+
+# USB-Serial-JTAG console is fine on S3 devkits; keeps flashing simple.
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y

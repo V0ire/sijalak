@@ -74,22 +74,14 @@ jalak::HttpResult perform(const HttpTransportConfig& cfg, esp_http_client_method
     return r;
 }
 
-std::string json_escape(const std::string& s) {
-    std::string out;
-    for (char c : s) {
-        if (c == '"' || c == '\\') out.push_back('\\');
-        out.push_back(c);
-    }
-    return out;
-}
-
 }  // namespace
 
 jalak::HttpResult EspHttpTransport::post_turn(const jalak::TurnRequest& req) {
-    // Body framing: base64 WAV is the caller's job in this stub; here we send a
-    // minimal JSON envelope carrying the idempotency key + metadata.
-    std::string body = "{\"session_id\":\"" + json_escape(req.session_id) +
-                       "\",\"idempotency_key\":\"" + json_escape(req.idempotency_key) + "\"}";
+    // Build the exact body the backend accepts:
+    //   {"session_id","idempotency_key","wav_base64"}
+    // Reusing the portable builder keeps the wire shape host-tested.
+    const std::string body =
+        jalak::build_turn_request_body(req.session_id, req.idempotency_key, req.wav_bytes);
     const std::string url = cfg_.base_url + "/turn";
     return perform(cfg_, HTTP_METHOD_POST, url, body, abort_);
 }
@@ -102,6 +94,16 @@ jalak::HttpResult EspHttpTransport::get_turn(const std::string& turn_id) {
 jalak::HttpResult EspHttpTransport::get_audio(const std::string& turn_id) {
     const std::string url = cfg_.base_url + "/turn/" + turn_id + "/audio";
     return perform(cfg_, HTTP_METHOD_GET, url, {}, abort_);
+}
+
+std::string EspHttpTransport::create_session() {
+    const std::string url = cfg_.base_url + "/session";
+    // The backend accepts an empty body for POST /v1/session; identity comes
+    // from the x-device-id header set in perform().
+    const jalak::HttpResult res = perform(cfg_, HTTP_METHOD_POST, url, "{}", abort_);
+    if (!res.ok || res.status < 200 || res.status >= 300) return "";
+    auto sid = jalak::parse_session_id(res.body);
+    return sid ? *sid : std::string();
 }
 
 }  // namespace jalak::hal

@@ -47,6 +47,38 @@ void test_json_scanner() {
     CHECK(!jalak::json_get_string(j, "missing").has_value());
 }
 
+// --- Base64 + request body (backend wire contract) --------------------------
+
+void test_base64_encode_rfc4648_vectors() {
+    auto enc = [](const std::string& s) {
+        return jalak::base64_encode(reinterpret_cast<const std::uint8_t*>(s.data()), s.size());
+    };
+    CHECK(enc("") == "");
+    CHECK(enc("f") == "Zg==");
+    CHECK(enc("fo") == "Zm8=");
+    CHECK(enc("foo") == "Zm9v");
+    CHECK(enc("foob") == "Zm9vYg==");
+    CHECK(enc("fooba") == "Zm9vYmE=");
+    CHECK(enc("foobar") == "Zm9vYmFy");
+}
+
+void test_turn_request_body_shape() {
+    std::vector<std::uint8_t> wav = {0x52, 0x49, 0x46, 0x46};  // "RIFF"
+    const std::string body = jalak::build_turn_request_body("sess-1", "idem-1", wav);
+    // Exact backend contract: session_id, idempotency_key, wav_base64.
+    CHECK(body ==
+          "{\"session_id\":\"sess-1\",\"idempotency_key\":\"idem-1\","
+          "\"wav_base64\":\"UklGRg==\"}");
+}
+
+void test_turn_request_body_escapes_quotes() {
+    std::vector<std::uint8_t> wav = {0x00};
+    const std::string body = jalak::build_turn_request_body("a\"b", "c\\d", wav);
+    // Quotes/backslashes in ids must be escaped so the JSON stays valid.
+    CHECK(body.find("\"session_id\":\"a\\\"b\"") != std::string::npos);
+    CHECK(body.find("\"idempotency_key\":\"c\\\\d\"") != std::string::npos);
+}
+
 // --- Response parsing -------------------------------------------------------
 
 void test_parse_done_turn() {
@@ -472,6 +504,9 @@ void test_poll_status_records_id() {
 
 int main() {
     test_json_scanner();
+    test_base64_encode_rfc4648_vectors();
+    test_turn_request_body_shape();
+    test_turn_request_body_escapes_quotes();
     test_parse_done_turn();
     test_parse_rejects_bad_action();
     test_parse_rejects_overlong_reply();

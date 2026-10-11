@@ -126,6 +126,22 @@ struct ParseError {
 // strict: it does not accept nested objects or arrays for the fields we read.
 std::optional<std::string> json_get_string(const std::string& json, const std::string& key);
 
+// Standard base64 encoding (RFC 4648, no line breaks). Portable and unit-tested;
+// used to frame the WAV body for POST /v1/turn (the backend expects wav_base64).
+std::string base64_encode(const std::uint8_t* data, std::size_t len);
+std::string base64_encode(const std::vector<std::uint8_t>& bytes);
+
+// Build the exact JSON body for POST /v1/turn that the backend accepts:
+//   {"session_id","idempotency_key","wav_base64"}
+// Kept as portable logic so host tests can assert the wire shape without a board.
+std::string build_turn_request_body(const std::string& session_id,
+                                    const std::string& idempotency_key,
+                                    const std::vector<std::uint8_t>& wav_bytes);
+
+// Parse the {"session_id":"..."} response from POST /v1/session.
+// Returns nullopt if the field is absent/empty or the body is malformed.
+std::optional<std::string> parse_session_id(const std::string& body);
+
 // Turn the raw HTTP body of a POST /v1/turn into a validated TurnResponse, or an
 // error. Applies the reply word limit and the action allowlist, mirroring
 // backend reply_schema.py so both ends agree on one contract.

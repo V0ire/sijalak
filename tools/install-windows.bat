@@ -3,6 +3,8 @@ REM =====================================================================
 REM  Si Jalak Bedas - Windows installer/launcher (double-click this file)
 REM  Runs the PowerShell installer with execution policy bypassed for this
 REM  one process only. Nothing global is changed.
+REM
+REM  Run this from the REPO ROOT (folder containing firmware\ backend\ tools\).
 REM =====================================================================
 setlocal
 set "PS1=%~dp0install-windows.ps1"
@@ -15,17 +17,25 @@ if not exist "%PS1%" (
 
 echo ============================================================
 echo   Si Jalak Bedas - Windows setup
-echo   This will install ESP-IDF v5.4 (esp32s3) if not present,
-echo   build host tests, and build the firmware target.
+echo   This expects to be run from the repo root:
+echo     %~dp0..
 echo ============================================================
 echo.
 pause
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PS1%" %*
+set "RC=%ERRORLEVEL%"
 
 echo.
-echo ============================================================
-echo   Finished. Check the messages above for any [MISS]/[WARN].
-echo ============================================================
+if "%RC%"=="0" (
+    echo ============================================================
+    echo   Finished OK. Read the messages above for any [WARN].
+    echo ============================================================
+) else (
+    echo ============================================================
+    echo   STOPPED with error %RC%. Nothing to flash.
+    echo   Scroll up to the FIRST [FAIL] line and fix that.
+    echo ============================================================
+)
 pause
-endlocal
+exit /b %RC%

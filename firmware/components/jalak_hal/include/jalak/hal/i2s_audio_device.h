@@ -1,11 +1,16 @@
 #pragma once
 // IDF-backed I2S audio driver: RX (INMP441-style mic) + TX (MAX98357A amp).
 //
-// UNVERIFIED: requires a board + known I2S pins/clocking. Compiles only under
-// ESP-IDF. Enforces the portable half-duplex rule from jalak_hal/jalak_logic.
+// Real ESP-IDF v5.4 implementation using the modern i2s_std API:
+//   i2s_new_channel -> i2s_channel_init_std_mode -> i2s_channel_enable
+//   i2s_channel_write (TX) / i2s_channel_read (RX)
 //
-// This is the piece the capture/playback caps assume: canonical input is
-// 16 kHz PCM16 mono; output is 24 kHz PCM16 mono.
+// UNVERIFIED on hardware: pins/clocking are owner/agent-reported, not measured.
+// A successful compile is NOT a hardware validation.
+//
+// Format contract (must match the backend): input PCM16 mono @16 kHz, output
+// PCM16 mono @24 kHz. The INMP441 emits 24/32-bit slots; the mic channel is
+// configured as 32-bit slots and the read path converts to PCM16.
 
 #include <cstdint>
 #include <vector>
@@ -13,6 +18,8 @@
 #include "jalak/audio.h"
 
 #if defined(ESP_PLATFORM)
+
+#include "driver/i2s_std.h"
 
 namespace jalak::hal {
 
@@ -32,20 +39,25 @@ struct I2sPins {
 
 class I2sAudioDevice final : public AudioSource, public AudioSink {
 public:
+    ~I2sAudioDevice() override;
+
     bool begin(const I2sPins& pins);
 
-    // AudioSink (playback, 24 kHz).
+    // AudioSink (playback, 24 kHz mono PCM16).
     bool start() override;
     bool stop() override;
     bool play(const std::vector<std::uint8_t>& pcm) override;
     bool is_playing() const override { return playing_; }
 
-    // AudioSource (capture, 16 kHz, capped at the canonical input cap).
+    // AudioSource (capture, 16 kHz mono PCM16, capped at the canonical input cap).
     bool start_capture() override;
     std::vector<std::uint8_t> stop_capture() override;
     bool is_capturing() const override { return capturing_; }
 
 private:
+    i2s_chan_handle_t tx_ = nullptr;
+    i2s_chan_handle_t rx_ = nullptr;
+    bool ready_ = false;
     bool playing_ = false;
     bool capturing_ = false;
 };
