@@ -10,16 +10,20 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'windows-common.ps1')
 $repo = Resolve-Path "$PSScriptRoot\.."
 Push-Location $repo
 try {
     New-Item -ItemType Directory -Force -Path $BuildDir | Out-Null
     Write-Host "== configure ==" -ForegroundColor Cyan
-    cmake -S firmware\test -B $BuildDir -G Ninja -DCMAKE_BUILD_TYPE=Debug
+    Invoke-NativeChecked 'host configure' 'cmake' @('-S', 'firmware/test', '-B', $BuildDir, '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Debug')
     Write-Host "== build ==" -ForegroundColor Cyan
-    cmake --build $BuildDir
+    Invoke-NativeChecked 'host build' 'cmake' @('--build', $BuildDir)
     Write-Host "== ctest ==" -ForegroundColor Cyan
-    ctest --test-dir $BuildDir --output-on-failure
+    Invoke-NativeChecked 'host ctest' 'ctest' @('--test-dir', $BuildDir, '--output-on-failure')
+} catch {
+    Write-Host "[FAIL] $_" -ForegroundColor Red
+    exit 1
 }
 finally {
     Pop-Location

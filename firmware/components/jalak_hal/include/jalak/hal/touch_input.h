@@ -1,13 +1,9 @@
 #pragma once
 // IDF-backed touch/PTT input driver.
 //
-// UNVERIFIED: requires a board + a known touch controller (e.g. CST816S) and its
-// INT/RST pins, all unknown until G1. Compiles only under ESP-IDF.
-//
-// The driver only reports raw press state + a monotonic duration; classification
-// into Tap/DoubleTap/LongPress uses the portable, host-tested
-// jalak::classify_press (state_machine.h). Keeping that split means the gesture
-// policy is tested on the host while the electrical part stays thin.
+// UNVERIFIED: GPIO digital-output capacitive module or button, not a native
+// capacitive-pad scanner or I2C touch controller. Reports raw level only.
+// Debounce/gestures belong to jalak::local::Button; clock supplied there.
 
 #include <cstdint>
 
@@ -23,7 +19,7 @@ public:
     virtual bool is_pressed() = 0;
 };
 
-// A minimal debounced reader over a GPIO/IRQ line. The electrical specifics
+// A minimal raw reader over a GPIO line. The electrical specifics
 // (active level, pull-up, controller protocol) must be confirmed on hardware.
 class GpioTouchInput final : public TouchInput {
 public:

@@ -6,7 +6,8 @@ namespace jalak::hal {
 struct I2sPins { int tx_bclk, tx_ws, tx_din, rx_bclk, rx_ws, rx_dout; };
 class I2sAudioDevice {
 public:
-    bool begin(I2sPins pins) {
+    bool begin(I2sPins pins, std::uint32_t rate = 24000) {
+        if (rate != 16000) throw std::runtime_error("local audio must be 16 kHz");
         if (pins.tx_bclk != 4 || pins.tx_ws != 5 || pins.tx_din != 6)
             throw std::runtime_error("i2s tx wiring");
         if (pins.rx_bclk >= 0 || pins.rx_ws >= 0 || pins.rx_dout >= 0)

@@ -1,8 +1,8 @@
 # Si Jalak Bedas — Panduan Build di Windows
 
-Ada **dua cara**. WSL2 paling mirip environment Linux tempat proyek ini dikembangkan
-(dan sudah terbukti `ctest 5/5`, `pytest 46`). ESP-IDF Windows Installer paling mulus
-untuk flashing ke board.
+Host Linux telah diuji; itu bukan bukti build Xtensa, Windows, atau hardware.
+Default firmware hanya OLED, touch, speaker TX 16 kHz dan SD. Tidak ada mic,
+Wi-Fi, HTTP atau voice/cloud dalam dependency graph lokal.
 
 ---
 
@@ -13,7 +13,7 @@ Backend Starlette berjalan di Windows native. Di **PowerShell**:
 ```powershell
 cd sijalak-bedas\backend
 py -m pip install starlette uvicorn pytest httpx anyio
-py -m pytest -q                       # harapkan: 46 passed
+py -m pytest -q                       # periksa exit code, jangan mengandalkan jumlah lama
 py -m jalak_backend --port 8787       # server offline (stub provider)
 ```
 
@@ -45,37 +45,36 @@ curl.exe -s -X POST http://127.0.0.1:8787/v1/session -H "x-device-token: dev-tok
 
 3. **Clone repo + ESP-IDF v5.4:**
    ```bash
-   git clone https://github.com/USERNAME/sijalak-bedas.git
+    git clone https://github.com/V0ire/sijalak.git
    git clone -b v5.4 --recursive https://github.com/espressif/esp-idf.git ~/esp/esp-idf
    cd ~/esp/esp-idf && ./install.sh esp32s3 && . ./export.sh
    ```
 
 4. **Build host test (cepat, tanpa board):**
    ```bash
-   cd ~/sijalak-bedas/firmware
-   export TMPDIR="$PWD/.buildtmp"
-   cmake -S test -B "$TMPDIR/fw_build" -G Ninja -DCMAKE_BUILD_TYPE=Debug
+    cd ~/sijalak
+    mkdir -p .buildtmp
+    export TMPDIR="$PWD/.buildtmp"
+    cmake -S firmware/test -B "$TMPDIR/fw_build" -G Ninja -DCMAKE_BUILD_TYPE=Debug
    cmake --build "$TMPDIR/fw_build"
-   ctest --test-dir "$TMPDIR/fw_build"        # harapkan: 100% tests passed (5)
-   bash test/run_sanitizers.sh               # ASan/UBSan, harapkan semua PASSED
+    ctest --test-dir "$TMPDIR/fw_build" --output-on-failure
    ```
 
 5. **Build target ESP32-S3 (butuh toolchain dari langkah 3):**
    ```bash
-   cd ~/sijalak-bedas/firmware
-   idf.py set-target esp32s3
-   idf.py build
+    cd ~/sijalak
+    python "$IDF_PATH/tools/idf.py" -C firmware -B .buildtmp/idf-s3-wsl -D IDF_TARGET=esp32s3 build
    ```
-   Output: `build/sijalak_bedas.bin`
+    Output: `.buildtmp/idf-s3-wsl/sijalak_bedas.bin`. Jangan pakai build dir host
+    untuk target atau menjalankan `set-target` berulang: aksi itu menjalankan fullclean.
 
-   > Catatan: 4 driver IDF (`i2c_oled_display`, `touch_input`, `i2s_audio_device`,
-   > `esp_http_transport`) dan `app_main.cpp` **belum pernah dikompilasi toolchain
-   > nyata**. Jika `idf.py build` error, kirim log-nya — perbaikan API IDF biasanya
-   > kecil (perubahan signature header driver).
+    > Final target link masih belum diverifikasi dengan compiler Xtensa asli.
+    > Tes baru compile real `ESP_PLATFORM` HAL body dengan mock boundary, bukan
+    > TU kosong, tetapi tetap bukan SDK/hardware. HTTP transport tidak di-build.
 
 6. **Flash ke board (butuh board + USB):**
    ```bash
-   idf.py -p /dev/ttyUSB0 flash monitor
+    python "$IDF_PATH/tools/idf.py" -C firmware -B .buildtmp/idf-s3-wsl -p /dev/ttyUSB0 flash monitor
    ```
    Di WSL, USB serial perlu `usbipd-win` untuk di-attach ke WSL. **Lebih mudah
    flash dari Windows native (Opsi B).**
@@ -88,11 +87,11 @@ curl.exe -s -X POST http://127.0.0.1:8787/v1/session -H "x-device-token: dev-tok
 3. Buka shortcut **"ESP-IDF 5.4 PowerShell"** dari Start Menu.
 4. Di dalamnya:
    ```powershell
-   git clone https://github.com/USERNAME/sijalak-bedas.git
-   cd sijalak-bedas\firmware
-   idf.py set-target esp32s3
-   idf.py build
-   idf.py -p COM3 flash monitor     # ganti COM3 dengan port board Anda
+    cd C:\path\ke\sijalak
+    . "$HOME\esp\esp-idf\export.ps1"
+    powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\flash-windows.ps1 -NoFlash -SkipAssets
+    # Setelah port board diverifikasi di Device Manager:
+    powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\flash-windows.ps1 -Port COM3 -Monitor -SkipAssets
    ```
 
 Badge checklist:
@@ -101,6 +100,13 @@ Badge checklist:
 - [ ] `idf.py build` sukses → `.bin` terbentuk
 - [ ] (butuh board) flash + monitor berjalan
 
-Hal yang **belum** divalidasi sampai Anda punya board: pin I2C/I2S/touch, alamat I2C
-OLED, endpoint HTTPS nyata. `app_main.cpp` memakai pin placeholder (-1) yang **wajib**
-diganti sesuai wiring board Anda.
+Hal yang **belum** divalidasi: pin I2C/I2S/touch/SD, alamat/controller OLED,
+clocking dan target toolchain. RX `-1` memang disengaja untuk **menonaktifkan mic**,
+bukan placeholder yang perlu diisi. Panduan konfigurasi build dir terpisah dan
+menuconfig persisten: [FLASH-WINDOWS.md](FLASH-WINDOWS.md).
+
+Host Windows: `powershell -ExecutionPolicy Bypass -File .\tools\build-host-tests.ps1`.
+Butuh compiler host C++20; firmware IDF sendiri tidak memerlukan MSVC/MinGW.
+Parser/mock Windows: `powershell -ExecutionPolicy Bypass -File .\tools\test-windows.ps1`.
+Tes tersebut hanya berjalan bila PowerShell sudah terpasang; source guards saja
+tidak membuktikan skrip dapat diparse/dijalankan.

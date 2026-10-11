@@ -22,6 +22,8 @@ constexpr char kTag[] = "jalak_sd";
 
 bool SdCard::begin(const SdPins& pins, const char* mount_point) {
     if (mounted_) return true;
+    if (!mount_point || mount_point[0] != '/' || std::strlen(mount_point) >= sizeof(mount_) ||
+        (pins.spi_host != SPI2_HOST && pins.spi_host != SPI3_HOST)) return false;
     if (pins.cs < 0 || pins.mosi < 0 || pins.sck < 0 || pins.miso < 0) {
         ESP_LOGE(kTag, "invalid SD pins cs=%d mosi=%d sck=%d miso=%d",
                  pins.cs, pins.mosi, pins.sck, pins.miso);
@@ -44,33 +46,40 @@ bool SdCard::begin(const SdPins& pins, const char* mount_point) {
     bus.quadhd_io_num = -1;
     bus.max_transfer_sz = 4000;
 
-    if (spi_bus_initialize((spi_host_device_t)pins.spi_host, &bus, SDSPI_DEFAULT_DMA) != ESP_OK) {
+    if (spi_bus_initialize(pins.spi_host, &bus, SDSPI_DEFAULT_DMA) != ESP_OK) {
         ESP_LOGE(kTag, "spi_bus_initialize failed");
         return false;
     }
 
     sdspi_device_config_t slot = SDSPI_DEVICE_CONFIG_DEFAULT();
     slot.gpio_cs = (gpio_num_t)pins.cs;
-    slot.host_id = (spi_host_device_t)pins.spi_host;
+    slot.host_id = pins.spi_host;
 
     sdmmc_card_t* card = nullptr;
     const esp_err_t err =
         esp_vfs_fat_sdspi_mount(mount_point, &host, &slot, &mount_cfg, &card);
     if (err != ESP_OK) {
         ESP_LOGE(kTag, "mount failed: %s", esp_err_to_name(err));
-        spi_bus_free((spi_host_device_t)pins.spi_host);
+        spi_bus_free(pins.spi_host);
         return false;
     }
     mounted_ = true;
-    std::strncpy(mount_, mount_point, sizeof(mount_) - 1);
+    card_ = card;
+    host_ = pins.spi_host;
+    std::strcpy(mount_, mount_point);  // length validated before allocating the bus
     ESP_LOGI(kTag, "SD mounted at %s", mount_);
     return true;
 }
 
 void SdCard::end() {
     if (!mounted_) return;
-    esp_vfs_fat_sdcard_unmount(mount_, nullptr);
+    if (esp_vfs_fat_sdcard_unmount(mount_, card_) != ESP_OK) {
+        ESP_LOGE(kTag, "unmount failed; retaining ownership for retry");
+        return;
+    }
+    card_ = nullptr;
     mounted_ = false;
+    spi_bus_free(host_);
 }
 
 bool SdCard::exists(const std::string& path) const {
@@ -89,9 +98,9 @@ std::vector<std::uint8_t> SdCard::read_file(const std::string& path, std::size_t
         ESP_LOGW(kTag, "open failed: %s", path.c_str());
         return out;
     }
-    std::fseek(f, 0, SEEK_END);
+    if (std::fseek(f, 0, SEEK_END) != 0) { std::fclose(f); return out; }
     const long size = std::ftell(f);
-    std::fseek(f, 0, SEEK_SET);
+    if (std::fseek(f, 0, SEEK_SET) != 0) { std::fclose(f); return out; }
     if (size <= 0 || static_cast<std::size_t>(size) > max_bytes) {
         ESP_LOGW(kTag, "file size %ld rejected (max %zu)", size, max_bytes);
         std::fclose(f);

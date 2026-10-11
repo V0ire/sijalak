@@ -64,11 +64,11 @@ extern "C" void app_main(void) {
     if (!touch_ok) ESP_LOGW(tag, "GPIO2 unavailable; input disabled");
 
     jalak::hal::I2sAudioDevice audio;
-    const bool audio_ok = audio.begin({kTxBclk, kTxWs, kTxDin, -1, -1, -1});
+    const bool audio_ok = audio.begin({kTxBclk, kTxWs, kTxDin, -1, -1, -1}, jalak::local::kAudioRateHz);
     if (!audio_ok) ESP_LOGW(tag, "I2S amp unavailable; running silently");
 
     jalak::hal::SdCard sd;
-    const bool sd_ok = sd.begin({kSdCs, kSdMosi, kSdSck, kSdMiso, /*spi_host=*/2});
+    const bool sd_ok = sd.begin({kSdCs, kSdMosi, kSdSck, kSdMiso});
     if (!sd_ok) {
         ESP_LOGW(tag, "SD unavailable; using built-in eyes, no sound");
     } else {

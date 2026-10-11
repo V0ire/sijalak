@@ -21,21 +21,19 @@ Panduan singkat. Anggap komputer **belum** ada ESP-IDF.
    ```
 4. **Build firmware**:
    ```powershell
-   cd firmware
-   idf.py set-target esp32s3
-   idf.py build
+    . "$HOME\esp\esp-idf\export.ps1"
+    powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\flash-windows.ps1 -NoFlash -SkipAssets
    ```
 5. **Flash ke board** (board tercolok USB):
    ```powershell
-   idf.py -p COM3 flash monitor      # ganti COM3 -> lihat di Device Manager
+    powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\flash-windows.ps1 -Port COM3 -Monitor -SkipAssets
    ```
 
 ---
 
 ## Cara otomatis (tanpa installer Espressif)
 
-Kalau Anda sudah punya **Git + CMake + Ninja + Visual Studio Build Tools**
-(atau MinGW-w64), cukup **klik dua kali**:
+Kalau Anda sudah punya **Git + Python**, **klik dua kali**:
 
 ```
 tools\install-windows.bat
@@ -44,13 +42,17 @@ tools\install-windows.bat
 Script itu akan:
 - Menjalankan test backend Python,
 - Men-clone + memasang ESP-IDF v5.4 (esp32s3) kalau belum ada,
-- Menjalankan test host (CTest),
 - Meng-build target ESP32-S3.
+- Berhenti pada error native pertama, termasuk aktivasi, versi/toolchain dan output.
+- **Mengunduh** dependensi/SDK. Jangan gunakan installer untuk build-only offline;
+  gunakan `flash-windows.ps1 -NoFlash` dengan SDK yang sudah terpasang.
 
-Butuh prasyarat yang belum ada? Jalankan:
+Test host terpisah membutuhkan CMake, Ninja dan compiler C++20 (MSVC/MinGW).
+Tidak ada opsi `-AutoInstall`/winget otomatis; pasang prasyarat yang Anda perlukan
+secara eksplisit. Untuk host test:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\install-windows.ps1 -AutoInstall
+powershell -ExecutionPolicy Bypass -File .\tools\build-host-tests.ps1
 ```
 
 ---
@@ -74,9 +76,17 @@ Buka http://127.0.0.1:8787 — server offline (provider tiruan, tanpa internet).
 
 - **Backend** bisa langsung dicoba: sudah lolos test end-to-end.
 - **Test firmware host** (CTest) jalan tanpa board.
-- **Driver hardware** (OLED I2C, mic/amp I2S, touch) dan `app_main` **BELUM
-  divalidasi di board nyata**. Pin di `app_main.cpp` masih placeholder `-1` —
-  ganti sesuai wiring Anda.
+- **Driver hardware** (OLED I2C, amp I2S, touch, SD) dan `app_main` **BELUM
+  divalidasi di board nyata**. Mic RX `-1` sengaja dinonaktifkan; jangan diisi.
 - Keberhasilan `idf.py build` **bukan** bukti perangkat berfungsi.
-- Kalau `idf.py build` error: kirim log-nya ke pengembang. Biasanya hanya perlu
-  penyesuaian kecil pada header driver IDF.
+- `.bat` menjalankan child PowerShell. Untuk build manual di terminal induk:
+  `. "$HOME\esp\esp-idf\export.ps1"; python "$env:IDF_PATH\tools\idf.py" build`
+  dari folder `firmware`. Jangan mengandalkan asosiasi file `.py`/bare `idf.py`.
+- Skrip memakai `.buildtmp\idf-esp32s3` dan `.buildtmp\sdkconfig-esp32s3`.
+  Tidak membersihkan cache, mengganti target berulang, atau memilih COM pertama.
+  Untuk cache salah, pilih `-BuildDir` baru; konfigurasi OLED/touch tetap dipertahankan.
+- Output hilang/kosong (`.bin`, flash args, image yang direferensikan) membuat skrip
+  gagal dan tidak flash. Lihat `.buildtmp\flash-windows.log` atau `install-windows.log`.
+- Build target/Windows compiler health masih belum terverifikasi; source lokal
+  punya dependency untracked, jadi checkout remote belum lengkap. Tidak ada push.
+- Panduan lengkap dan menuconfig: [FLASH-WINDOWS.md](FLASH-WINDOWS.md).

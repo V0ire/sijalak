@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="id">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jalak · Preview OLED lokal</title>
+<style>
+:root { color-scheme:dark; --ink:#fff; --paper:#111; --line:#888; }
+* { box-sizing:border-box; }
+body { margin:0 auto; padding:32px 20px; max-width:72ch; background:var(--paper); color:var(--ink); font:16px/1.6 system-ui,sans-serif; }
+h1 { font-size:1.6rem; margin:0 0 12px; }
+h2 { font-size:1.1rem; margin:28px 0 8px; }
+p { margin:8px 0 20px; }
+canvas { display:block; width:100%; max-width:512px; aspect-ratio:2; background:#000; image-rendering:pixelated; border:1px solid var(--line); }
+#state { font-variant-numeric:tabular-nums; min-height:2em; margin:12px 0; }
+.controls { display:flex; flex-wrap:wrap; gap:8px; }
+button { background:var(--paper); color:var(--ink); border:1px solid var(--line); border-radius:4px; padding:10px 14px; font:inherit; cursor:pointer; }
+button:hover { background:var(--ink); color:var(--paper); }
+button:active { background:#ccc; color:#000; }
+button:disabled { opacity:.6; cursor:wait; }
+button:focus-visible,input:focus-visible { outline:3px solid var(--ink); outline-offset:4px; }
+::selection { background:var(--ink); color:var(--paper); }
+label { display:block; margin:16px 0; }
+input { accent-color:var(--ink); }
+#error { min-height:1.6em; }
+code,kbd { font-size:.95em; }
+</style>
+<main>
+<h1>Preview OLED lokal</h1>
+<p>Wajah orisinal 128 × 64 dan Pomodoro 25/5. Piksel serta timer berasal dari C++ firmware yang dikompilasi, bukan timer JavaScript. Tanpa mic, audio, Wi-Fi, cloud, atau GIF Dasai.</p>
+<canvas width="128" height="64" role="img" aria-label="Layar OLED monochrome dari renderer firmware">Preview OLED membutuhkan canvas.</canvas>
+<p id="state" role="status">Memuat runner C++…</p>
+<p id="info" role="status" aria-live="polite"></p>
+<div class="controls" aria-label="Kontrol GPIO2 simulasi">
+<button data-action="tap">Tap · Menu / Berikutnya (N)</button>
+<button data-action="double">Double tap · Pilih / Mulai / Jeda (S)</button>
+<button data-action="hold">Hold · Kembali / Reset (B)</button>
+</div>
+<label><input type="checkbox" id="reduced"> Kurangi gerak wajah</label>
+<p id="error" role="alert"></p>
+<h2>Kontrol satu tombol</h2>
+<p>Tap membuka menu atau berpindah pilihan. Double tap memilih; di timer: mulai, jeda, lanjut, atau ulang setelah selesai. Di wajah: kedipan ramah. Hold ≥ 1 detik di timer mereset ke 25:00 dan kembali ke wajah. Hold di menu hanya kembali; timer tetap berjalan di latar.</p>
+<h2>Percepat pengujian</h2>
+<div class="controls">
+<button data-action="focus-end">Simulasi +25 menit</button>
+<button data-action="break-end">Simulasi +5 menit</button>
+</div>
+<p>Fokus berpindah otomatis ke jeda 5 menit, lalu berhenti. Saat timer di-pause, waktu tidak berkurang. Tombol preview mengirim urutan level mentah dengan durasi virtual ke debouncer C++ yang sama. Tab + Enter/Space juga dapat digunakan.</p>
+<p>Ini simulasi lokal, bukan bukti build ESP-IDF atau pengujian board. SDA8/SCL9, controller/alamat OLED, dan polaritas GPIO2 masih perlu verifikasi.</p>
+</main>
+<script>
+const canvas=document.querySelector('canvas'), ctx=canvas.getContext('2d');
+const status=document.querySelector('#state'), error=document.querySelector('#error'), info=document.querySelector('#info');
+const reduced=document.querySelector('#reduced'), buttons=[...document.querySelectorAll('button')];
+const media=matchMedia('(prefers-reduced-motion: reduce)');
+reduced.checked=media.matches;
+media.addEventListener('change', e=>{ reduced.checked=e.matches; });
+let busy=false, failed=false;
+async function input(action='state') {
+  if(busy || (failed && action==='state')) return;
+  busy=true;
+  if(action!=='state') buttons.forEach(b=>b.disabled=true);
+  try {
+    const response=await fetch('/input',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,reduced:reduced.checked})});
+    if(!response.ok) throw Error(await response.text());
+    const data=await response.json();
+    const image=ctx.createImageData(128,64);
+    for(let y=0;y<64;y++) for(let x=0;x<128;x++) {
+      const i=(y*128+x)*4, on=data.pages[(y>>3)*128+x] & (1<<(y&7));
+      image.data[i]=image.data[i+1]=image.data[i+2]=on?255:0; image.data[i+3]=255;
+    }
+    ctx.putImageData(image,0,0);
+    const names={face:'Wajah',menu:'Menu',timer:'Pomodoro',focus:'Fokus',break:'Jeda',done:'Selesai'};
+    status.textContent=`${names[data.screen]} · ${names[data.phase]} · ${data.running?'Berjalan':'Berhenti / jeda'} · Sisa ${Math.ceil(data.remaining_ms/1000)} detik${data.screen==='menu'?' · Pilihan: '+(data.selection?'Pomodoro':'Wajah'):''}`;
+    const soundLabels={mochi_pop:'Pop Mochi (aset lokal)',ui_tap:'Nada tap',ui_select:'Nada pilih',focus_start:'Nada mulai fokus',break_start:'Nada mulai jeda',session_end:'Nada selesai'};
+    const clipText=data.clip?`Animasi: ${data.clip}, frame ${data.frame+1}`:'Animasi: mata bawaan (tidak ada aset SD lokal)';
+    const played=(data.sounds||[]).map(s=>soundLabels[s]||s);
+    const soundText=played.length?`Suara: ${played.join(' → ')}`:'Suara: —';
+    info.textContent=`${clipText} · ${soundText}`;
+    error.textContent=''; failed=false;
+  } catch(e) { error.textContent='Runner tidak tersedia: '+e.message+'. Mulai ulang server lokal, lalu klik kontrol untuk mencoba kembali.'; failed=true; }
+  finally { busy=false; buttons.forEach(b=>b.disabled=false); }
+}
+buttons.forEach(b=>b.addEventListener('click',()=>input(b.dataset.action)));
+reduced.addEventListener('change',()=>input());
+document.addEventListener('keydown',e=>{
+  if(e.repeat || e.ctrlKey || e.altKey || e.metaKey || e.target.matches('input,textarea')) return;
+  const action={n:'tap',s:'double',b:'hold'}[e.key.toLowerCase()];
+  if(action){e.preventDefault(); input(action);}
+});
+input(); setInterval(()=>input(),100);
+</script>
+</html>

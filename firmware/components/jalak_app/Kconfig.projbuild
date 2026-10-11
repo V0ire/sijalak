@@ -1,0 +1,12 @@
+menu "Jalak local OLED demo (hardware UNVERIFIED)"
+    config JALAK_TOUCH_ACTIVE_LOW
+        bool "GPIO2 module/button is active-low (verify actual module)"
+        default y
+    config JALAK_OLED_SH1106
+        bool "Use SH1106 instead of SSD1306 (verify actual OLED)"
+        default n
+    config JALAK_OLED_ADDRESS
+        hex "OLED I2C address (verify actual OLED)"
+        range 0x08 0x77
+        default 0x3c
+endmenu

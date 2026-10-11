@@ -37,6 +37,7 @@ public:
     // demo still works with no SD card.
     bool load_face_clip(Clip&& clip) { return face_clip_.load(clip); }
     bool face_clip_loaded() const { return face_clip_.loaded(); }
+    std::size_t face_frame_index() const { return face_clip_.frame_index(); }
 
     // Queue a sound to play for the last gesture/phase change. The caller drains
     // this and feeds it to the audio device; portable code never touches I2S.

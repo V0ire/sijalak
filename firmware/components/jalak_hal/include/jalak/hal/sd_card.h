@@ -18,6 +18,9 @@
 
 #if defined(ESP_PLATFORM)
 
+#include "driver/spi_common.h"
+#include "sdmmc_cmd.h"
+
 namespace jalak::hal {
 
 struct SdPins {
@@ -25,11 +28,15 @@ struct SdPins {
     int mosi = -1;
     int sck = -1;
     int miso = -1;
-    int spi_host = 2;  // SPI2_HOST by default
+    spi_host_device_t spi_host = SPI2_HOST;
 };
 
 class SdCard {
 public:
+    SdCard() = default;
+    ~SdCard() { end(); }
+    SdCard(const SdCard&) = delete;
+    SdCard& operator=(const SdCard&) = delete;
     // Mount FATFS at /sdcard. Returns false on any failure (no card, bad FS).
     bool begin(const SdPins& pins, const char* mount_point = "/sdcard");
     bool mounted() const { return mounted_; }
@@ -44,6 +51,8 @@ public:
 private:
     bool mounted_ = false;
     char mount_[32] = {};
+    sdmmc_card_t* card_ = nullptr;
+    spi_host_device_t host_ = SPI2_HOST;
 };
 
 }  // namespace jalak::hal

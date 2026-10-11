@@ -14,6 +14,6 @@ idf_component_register(
         "src/i2s_audio_device.cpp"
         "src/sd_card.cpp"
     INCLUDE_DIRS "include"
-    REQUIRES jalak_logic
-    PRIV_REQUIRES esp_driver_i2c esp_driver_i2s esp_driver_gpio esp_driver_spi esp_driver_sdspi sdmmc fatfs
+    REQUIRES jalak_logic esp_driver_i2c esp_driver_i2s esp_driver_spi sdmmc
+    PRIV_REQUIRES esp_driver_gpio esp_driver_sdspi fatfs
 )

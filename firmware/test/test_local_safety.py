@@ -31,4 +31,9 @@ if __name__ == "__main__":
     # The local demo's allowed drivers ARE present (speaker + SD, not network).
     assert '"src/i2s_audio_device.cpp"' in hal
     assert '"src/sd_card.cpp"' in hal
-    print("4 local-only source/build guards passed")
+    logic = (ROOT / "firmware/components/jalak_logic/CMakeLists.txt").read_text()
+    assert '"src/api_client.cpp"' not in logic, "unused voice API must stay outside local IDF build"
+    # Public/private dependencies must not reconnect a network path either.
+    manifests = re.sub(r"#[^\n]*", "", app + hal + logic)
+    assert not re.search(r"esp_wifi|esp_http|esp_netif|legacy_voice", manifests)
+    print("local-only source/component guards passed (NOT target/hardware validation)")

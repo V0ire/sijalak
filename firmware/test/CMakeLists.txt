@@ -10,7 +10,11 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-add_compile_options(-Wall -Wextra -Wpedantic)
+if(MSVC)
+  add_compile_options(/W4)
+else()
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
 add_library(jalak_logic STATIC
   ../components/jalak_logic/src/expression.cpp
@@ -94,7 +98,21 @@ add_test(NAME jalak_local_source_guard COMMAND ${Python3_EXECUTABLE} ${CMAKE_CUR
 
 add_executable(jalak_local_preview ../preview/local_runner.cpp)
 target_link_libraries(jalak_local_preview PRIVATE jalak_local)
+# Preview runner reads optional local Mochi frames passed as argv[1].
 set_target_properties(jalak_local test_jalak_local jalak_local_preview
   test_jalak_local_app test_jalak_local_app_high PROPERTIES CXX_STANDARD 17)
 add_test(NAME jalak_local_preview_api COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/../preview/test_preview.py --runner $<TARGET_FILE:jalak_local_preview>)
+
+# Real guarded HAL bodies under behavioral IDF doubles (NOT target SDK validation).
+add_executable(test_jalak_idf_hal test_idf_hal.cpp
+  ../components/jalak_hal/src/i2s_audio_device.cpp
+  ../components/jalak_hal/src/sd_card.cpp
+  ../components/jalak_hal/src/i2c_oled_display.cpp)
+target_compile_definitions(test_jalak_idf_hal PRIVATE ESP_PLATFORM JALAK_TEST_TMPDIR="${CMAKE_BINARY_DIR}")
+target_include_directories(test_jalak_idf_hal PRIVATE idf_boundary ../components/jalak_hal/include)
+target_link_libraries(test_jalak_idf_hal PRIVATE jalak_logic)
+set_target_properties(test_jalak_idf_hal PROPERTIES CXX_STANDARD 17)
+add_test(NAME jalak_idf_audio_boundary COMMAND test_jalak_idf_hal audio)
+add_test(NAME jalak_idf_sd_boundary COMMAND test_jalak_idf_hal sd)
+add_test(NAME jalak_build_contracts COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_build_contracts.py)

@@ -23,9 +23,9 @@ bool I2cOledDisplay::begin(const I2cOledPins& pins, const OledConfig& cfg) {
         return false;
     }
     i2c_master_bus_config_t bus_cfg = {};
-    bus_cfg.i2c_port = pins.i2c_port;
-    bus_cfg.sda_io_num = pins.sda;
-    bus_cfg.scl_io_num = pins.scl;
+    bus_cfg.i2c_port = static_cast<decltype(bus_cfg.i2c_port)>(pins.i2c_port);
+    bus_cfg.sda_io_num = static_cast<gpio_num_t>(pins.sda);
+    bus_cfg.scl_io_num = static_cast<gpio_num_t>(pins.scl);
     bus_cfg.clk_source = I2C_CLK_SRC_DEFAULT;
     bus_cfg.glitch_ignore_cnt = 7;
     bus_cfg.flags.enable_internal_pullup = true;

@@ -3,7 +3,7 @@
 // only records it. It never touches a filesystem.
 #include "boundary.h"
 namespace jalak::hal {
-struct SdPins { int cs, mosi, sck, miso; int spi_host; };
+struct SdPins { int cs, mosi, sck, miso; int spi_host = 1; };
 class SdCard {
 public:
     bool begin(SdPins pins, const char* = "/sdcard") {

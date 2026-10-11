@@ -9,8 +9,8 @@
 // A successful compile is NOT a hardware validation.
 //
 // Format contract (must match the backend): input PCM16 mono @16 kHz, output
-// PCM16 mono @24 kHz. The INMP441 emits 24/32-bit slots; the mic channel is
-// configured as 32-bit slots and the read path converts to PCM16.
+// PCM16 mono @24 kHz by default (local demo selects 16 kHz). Optional INMP441 RX
+// emits 24/32-bit slots; the read path converts its 32-bit slots to PCM16.
 
 #include <cstdint>
 #include <vector>
@@ -41,9 +41,13 @@ class I2sAudioDevice final : public AudioSource, public AudioSink {
 public:
     ~I2sAudioDevice() override;
 
-    bool begin(const I2sPins& pins);
+    I2sAudioDevice() = default;
+    I2sAudioDevice(const I2sAudioDevice&) = delete;
+    I2sAudioDevice& operator=(const I2sAudioDevice&) = delete;
+    // All RX pins -1 disables the microphone; partial RX configuration is invalid.
+    bool begin(const I2sPins& pins, std::uint32_t playback_rate = 24000);
 
-    // AudioSink (playback, 24 kHz mono PCM16).
+    // AudioSink (playback, configured rate mono PCM16).
     bool start() override;
     bool stop() override;
     bool play(const std::vector<std::uint8_t>& pcm) override;
@@ -55,6 +59,7 @@ public:
     bool is_capturing() const override { return capturing_; }
 
 private:
+    void release_channels();
     i2s_chan_handle_t tx_ = nullptr;
     i2s_chan_handle_t rx_ = nullptr;
     bool ready_ = false;

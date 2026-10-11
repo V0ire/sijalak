@@ -1,7 +1,7 @@
 @echo off
 REM =====================================================================
 REM  Si Jalak Bedas - Windows FLASH (double-click launcher)
-REM  Runs tools\flash-windows.ps1: install ESP-IDF (if missing) -> build -> flash.
+REM  Requires installed ESP-IDF. Builds first; never picks a COM port automatically.
 REM
 REM  Tips:
 REM    - Pastikan board tercolok dengan kabel DATA dan sudah terdeteksi COM.
@@ -18,24 +18,36 @@ if not exist "%PS1%" (
 
 echo ============================================================
 echo   Si Jalak Bedas - FLASH ke ESP32-S3 (Windows)
-echo   Langkah: cek prasyarat -^> install ESP-IDF -^> build -^> flash
-echo   Ini bisa memakan 15-30 menit pada percobaan pertama.
+echo   Langkah: cek ESP-IDF terpasang -^> build -^> validasi output -^> flash
 echo ============================================================
 echo.
-echo [1] Flash saja (build sudah pernah sukses)
-echo [2] Flash + buka serial monitor
+echo [1] Build + flash (port COM harus diberikan)
+echo [2] Build + flash + buka serial monitor
 echo [3] Build saja (jangan flash)
 echo [4] Keluar
 echo.
-set /p CHOICE="Pilih [1-4]: "
+choice /C 1234 /N /M "Pilih [1-4]: "
+if errorlevel 5 exit /b 1
+if errorlevel 4 exit /b 0
+if errorlevel 3 goto buildonly
+if errorlevel 2 goto monitor
+if errorlevel 1 goto flash
+exit /b 1
 
-if "%CHOICE%"=="1" set "ARGS="
-if "%CHOICE%"=="2" set "ARGS=-Monitor"
-if "%CHOICE%"=="3" set "ARGS=-NoFlash"
-if "%CHOICE%"=="4" exit /b 0
-
-powershell -NoProfile -ExecutionPolicy Bypass -File "%PS1%" %ARGS%
+:flash
+set "JALAK_FLASH_SCRIPT=%PS1%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$p = Read-Host 'Port board terverifikasi (mis. COM5)'; & $env:JALAK_FLASH_SCRIPT -Port $p; exit $LASTEXITCODE"
 set "RC=%ERRORLEVEL%"
+goto result
+:monitor
+set "JALAK_FLASH_SCRIPT=%PS1%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$p = Read-Host 'Port board terverifikasi (mis. COM5)'; & $env:JALAK_FLASH_SCRIPT -Port $p -Monitor; exit $LASTEXITCODE"
+set "RC=%ERRORLEVEL%"
+goto result
+:buildonly
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PS1%" -NoFlash
+set "RC=%ERRORLEVEL%"
+:result
 
 echo.
 if "%RC%"=="0" (
