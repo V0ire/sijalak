@@ -23,12 +23,14 @@ Status vocabulary (see `firmware/README.md`, `backend/README.md`):
 | `firmware/components/jalak_logic` device API client (SW-FW-05) | **implemented + compiled + simulated** | `test_jalak_api` below (mock transport) |
 | Device API client cancellation + deadline contract | **implemented + compiled + simulated** | `test_jalak_api` below (fake Clock, token) |
 | Portable OLED codec (SSD1306/SH1106 command/page encoder) | **implemented + compiled + simulated** | `test_jalak_oled` below |
-| IDF HAL drivers (I2C OLED, GPIO touch, I2S audio, esp_http transport) | **implemented**; IDF compile **unverified** | sources guarded by `ESP_PLATFORM`; host TU-compiles to nothing |
-| `firmware/components/jalak_app` full composition | **implemented**; IDF compile **unverified** | `app_main.cpp` host TU-compiles clean |
+| IDF HAL drivers (I2C OLED, GPIO touch, I2S audio, esp_http transport) | **implemented**; IDF compile **unverified** | I2S is a real v5.4 `i2s_std` driver; all guarded by `ESP_PLATFORM` |
+| `firmware/components/jalak_app` full composition | **implemented**; IDF compile **unverified** | full PTT→capture→upload→speak→ready flow on real FSM transitions |
 | Backend core (`limits`, `sessions`, `reply_schema`, `guardrails`, `provider`, `cost`) | **implemented + compiled + simulated** | pytest below |
 | Backend HTTP gateway (Starlette) + uvicorn entrypoint | **implemented + compiled + simulated**; real-socket E2E **verified locally** | `test_gateway_*.py` + manual uvicorn run below |
+| Firmware→backend request contract | **verified offline (E2E)** | `backend/tests/test_firmware_e2e.py` builds the real C++ body and POSTs to the real gateway |
 | Firmware↔backend wire contract | **simulated** | `test_contract_sync.py`, `test_wire_format.py`, `test_integration.cpp` |
-| ESP32-S3 target firmware image | **unverified** (no ESP-IDF toolchain yet) | installer prepared: `tools/install-esp-idf.fish` |
+| ESP32-S3 target firmware image | **unverified** (no ESP-IDF toolchain run) | installer fixed to fail-fast; toolchain still not installed |
+| IDF component wiring (REQUIRES/SRCS/include) | **statically validated** | all component SRCS/include paths verified present; `esp_driver_*` REQUIRES corrected |
 | I2C OLED / I2S mic+amp on real hardware | **unverified** | — |
 | Live provider (Gemini) calls, capture, cloud path | **unverified** (no credentials; adult-R&D only) | — |
 | Phase 1 goal / gates G1–G5 | **NOT_VERIFIED / BLOCKED** (unchanged) | `phases/01-baseline-contracts/01-01-SUMMARY.md` |
@@ -85,6 +87,32 @@ from scratch, not an incremental artifact.
 
 Sanitizer receipt (ASan + UBSan): all **five** host suites run clean via
 `firmware/test/run_sanitizers.sh` (exit 0, no diagnostics).
+
+### 2.0a Firmware completeness pass — I2S driver, HTTP contract, app flow
+
+What changed from the earlier "composition" state (which had stubs on the main
+path), each verified off-hardware by build + tests:
+
+- **I2S driver is now real** (`jalak_hal/src/i2s_audio_device.cpp`): ESP-IDF v5.4
+  `i2s_std` API (`i2s_new_channel` → `i2s_channel_init_std_mode` →
+  `i2s_channel_enable`, `i2s_channel_write`/`read`), TWO channels with separate
+  TX (amp, 24 kHz/16-bit) and RX (mic, 16 kHz/32-bit→PCM16) pins, half-duplex
+  enforced. All macros/types checked against the local IDF headers.
+- **Firmware builds the backend's exact request body**: portable
+  `base64_encode` + `build_turn_request_body` produce
+  `{"session_id","idempotency_key","wav_base64"}`; `parse_session_id` +
+  `transport.create_session()` bootstrap a session. Earlier the POST sent only
+  ids (no audio) and would have 4xx'd.
+- **`app_main` runs the full flow** on real FSM transitions: PTT→Listening→
+  (stop/timeout)→Uploading→submit→Processing→Speaking(play audio)→Ready; long
+  press = STOP aborting the in-flight request. No stub remains on the main path.
+- **IDF wiring corrected**: `PRIV_REQUIRES esp_driver_{i2c,i2s,gpio}` (the legacy
+  umbrella `driver` would not expose those headers under v5.4), project-wide
+  C++17, N16R8 `sdkconfig.defaults`. All component SRCS/include paths validated
+  present.
+
+Still **unverified**: no ESP-IDF toolchain run here → the target build and the
+IDF compile of these drivers are not proven. No hardware.
 
 ### 2.0 Independent engineering audit + fixes (this session)
 
@@ -170,7 +198,7 @@ rtk pytest -q
 Observed result:
 
 ```
-Pytest: 46 passed
+Pytest: 48 passed
 ```
 
 Covered: canonical byte limits (input 256044 / output 720044), session ownership /
@@ -184,6 +212,10 @@ contract sync, plus the new HTTP gateway suites:
 - `test_gateway_negative.py` (8) — provider failure→502 (+ observable `failed`
   status), reset-then-submit rejection, malformed JSON, missing fields,
   unknown-turn 404, audio-before-done 404, bad action→422, empty/undersized WAV.
+- `test_firmware_e2e.py` (2) — compiles the REAL firmware `api_client.cpp` body
+  builder into a stdin→body helper, POSTs its output to the REAL Starlette gateway
+  over ASGI, and asserts 200 + the exact response fields the firmware parser reads.
+  This closes the firmware↔backend request contract offline.
 - `test_wire_format.py` (6) — locks the JSON wire shape the firmware hardcodes.
 - `test_entrypoint.py` (2) — `python -m jalak_backend` arg/DI wiring.
 - `test_contract_sync.py` (5) — firmware↔backend numeric/action parity.

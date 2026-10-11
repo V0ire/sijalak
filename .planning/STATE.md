@@ -38,9 +38,15 @@ tracked as an exploration stream and does **not** complete any phase or requirem
   over ASGI **and** a real local uvicorn socket; portable OLED codec; IDF HAL drivers
   (I2C OLED, GPIO touch, I2S audio, esp_http transport) + full `app_main` composition.
   Evidence: ctest **5/5** (jalak_logic, jalak_hal, jalak_api, jalak_integration,
-  jalak_oled), pytest **46**. All five host suites ASan+UBSan clean.
+  jalak_oled), pytest **48**. All five host suites ASan+UBSan clean.
+- Firmware completeness pass (same session): I2S driver is now a real IDF v5.4
+  `i2s_std` implementation (separate TX/RX channels); firmware builds the exact
+  backend request body (`base64_encode` + `build_turn_request_body`) and bootstraps
+  a session; `app_main` runs the full PTT→capture→upload→speak→ready flow with
+  STOP abort; IDF `PRIV_REQUIRES` fixed to `esp_driver_*`; installer is fail-fast.
+  Firmware→backend request contract verified E2E offline (`test_firmware_e2e.py`).
 - ESP32-S3 target image, real OLED/mic/amp, real HTTP/TLS transport, live provider:
-  **unverified** (no ESP-IDF toolchain yet; installer prepared at `tools/install-esp-idf.fish`).
+  **unverified** (no ESP-IDF toolchain run; installer fixed but toolchain not installed).
 Classification + per-task ledger: `.planning/DEPENDENCY-CLASSIFICATION.md`.
 
 ## Environment (checked this session)
