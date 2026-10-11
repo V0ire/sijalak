@@ -126,6 +126,13 @@ if (-not $SkipAssets) {
 # ---------------------------------------------------------------------
 Head "Build firmware"
 # ---------------------------------------------------------------------
+# idf.py refuses to clean a folder that is not a CMake build dir (e.g. a leftover
+# firmware\build from an earlier failed run). Stop with the exact fix; never delete it here.
+$fwBuild = Join-Path $repo "firmware\build"
+if ((Test-Path $fwBuild) -and -not (Test-Path (Join-Path $fwBuild "CMakeCache.txt"))) {
+    Fail "firmware\build exists but is not a CMake build directory (leftover from an earlier run). Delete it manually, then re-run:  Remove-Item -Recurse -Force '$fwBuild'"
+}
+
 Push-Location (Join-Path $repo "firmware")
 try {
     Invoke-Checked "idf.py set-target" { idf.py set-target esp32s3 }
